@@ -9,6 +9,7 @@ class Request:
         self.link = link
         self.event_loop = asyncio.get_event_loop()
 
+
     def parse_url(self) -> str:
         return self.event_loop.run_until_complete(self.request())
 
