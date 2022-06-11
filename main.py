@@ -54,7 +54,7 @@ def main():
 
 
     else: print('the link you specified does not match the format\n'
-                +EXAMPLE_LINKS[0]+'\nили\n'+EXAMPLE_LINKS[1])
+                +EXAMPLE_LINKS[0]+'\nor\n'+EXAMPLE_LINKS[1])
 
 if __name__ == "__main__":
     main()
