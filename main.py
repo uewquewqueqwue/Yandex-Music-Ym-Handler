@@ -1,60 +1,79 @@
 import argparse
 import re
+from typing import NamedTuple
 
-from typing import Literal, Tuple
 from re_parsing.re_parser import ReParser
-
 
 YANDEX_MUSIC_ALBUM: str = 'https://music.yandex.ru/album/'
 EXAMPLE_LINKS: list = ['https://music.yandex.ru/album/123123',
                        'https://music.yandex.ru/album/123123/track/123123']
 
+class Track(NamedTuple):
+    """returns the data container"""
 
-def parse(end: str) -> Tuple[str, str, Tuple[str, str, str, str], str, str, str | None, Literal['album', 'track']]:
+    title: str
+    img: str
+    artist: tuple
+    genre: str
+    date: str
+    album: str
+    infotype: str
+
+
+def dataparse(end: str) -> Track:
+    """returns ready-made dataparse"""
+
     if end.isdigit():
-        parse = ReParser(YANDEX_MUSIC_ALBUM+end)
-        title, album, infotype = parse.get_album_name(), None, 'album'
+        parses = ReParser(YANDEX_MUSIC_ALBUM+end)
+        title, album, infotype = parses.get_album_name(), None, 'album'
     else:
-        parse = ReParser(YANDEX_MUSIC_ALBUM+end)
-        title, infotype = parse.get_track_name(), 'track'
-        album = parse.get_album_name_with_track()
+        parses = ReParser(YANDEX_MUSIC_ALBUM+end)
+        title, infotype = parses.get_track_name(), 'track'
+        album = parses.get_album_name_with_track()
 
 
-    return (title, parse.get_img(), parse.get_artist(),
-            parse.get_genre(), parse.get_date(), album, infotype)
+    return (Track(title = title, img = parses.get_img(), artist = parses.get_artist(),
+            genre = parses.get_genre(), date = parses.get_date(),
+            album = album, infotype = infotype))
 
 
 def main():
+    """return main"""
+
     parses: argparse.ArgumentParser = argparse.ArgumentParser(
         description = 'Find out information about a track or album by '
         'receiving requests from yandex music links', argument_default = None)
     parses.add_argument('-u', '--url', required = True,
-                        action = 'store', type = str, 
+                        action = 'store', type = str,
                         metavar = '', help = 'Specify the link like this: -u link')
     args = parses.parse_args()
+
     print('\nYandex-Music-Link-Wrapper v.0.1 - by uewquewqueqwue(only regex)')
     print('----------------------------------------------------')
+
     pat = r"^https://music[.]yandex[.]ru/album/((?P<track>[\d]*/track/[\d]*)|(?P<ntrack>[\d]*[^/]))"
     match = re.search(pat, args.url)
 
     if match:
         print(f'\u21B3 YaMusic Wrapper - link received {args.url}')
         answer = match.groupdict()
-        res_parse = parse(answer["ntrack"]) if answer.get("track") is None else parse(answer["track"])
+        res_parse = dataparse(
+            answer["ntrack"]) if answer.get("track") is None else dataparse(answer["track"])
         temp = 'Album' if res_parse[-1] == 'album' else 'Track'
-        print(f'\u21B3 {temp} title - {res_parse[0]}')
-        print(f'\u21B3 {temp} cover - {res_parse[1]}')
-        None if res_parse[5] is None else print(f'\u21B3 Track from the album - {res_parse[5]}')
-        print(f'\u21B3 Performer - {res_parse[2][0]}')
-        print(f'  \u21B3 About the performer - {res_parse[2][3]}')
-        print(f'  \u21B3 Link to the artist - {res_parse[2][1]}')
-        print(f'  \u21B3 Link to the artist\'s avatar - {res_parse[2][2]}')
-        print(f'\u21B3 Genres - {res_parse[3]}')
-        print(f'\u21B3 Year of release - {res_parse[4]}')
-
+        print(f'\u21B3 {temp} title - {res_parse.title}')
+        print(f'\u21B3 {temp} cover - {res_parse.img}')
+        if res_parse.album is not None:
+            print(f'\u21B3 Track from the album - {res_parse.album}')
+        print(f'\u21B3 Performer - {res_parse.artist.name}')
+        print(f'  \u21B3 About the performer - {res_parse.artist.about}')
+        print(f'  \u21B3 Link to the artist - {res_parse.artist.link}')
+        print(f'  \u21B3 Link to the artist\'s avatar - {res_parse.artist.avatar}')
+        print(f'\u21B3 Genres - {res_parse.genre}')
+        print(f'\u21B3 Year of release - {res_parse.date}')
 
     else: print('the link you specified does not match the format\n'
                 +EXAMPLE_LINKS[0]+'\nor\n'+EXAMPLE_LINKS[1])
+
 
 if __name__ == "__main__":
     main()
