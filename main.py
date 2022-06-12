@@ -16,6 +16,7 @@ class Track(NamedTuple):
     artist: tuple
     genre: str
     date: str
+    label: str
     album: str
     infotype: str
 
@@ -34,7 +35,7 @@ def dataparse(end: str) -> Track:
 
     return (Track(title = title, img = parses.get_img(), artist = parses.get_artist(),
             genre = parses.get_genre(), date = parses.get_date(),
-            album = album, infotype = infotype))
+            label= parses.get_label(), album = album, infotype = infotype))
 
 
 def main():
@@ -55,7 +56,7 @@ def main():
     match = re.search(pat, args.url)
 
     if match:
-        print(f'\u21B3 YaMusic Wrapper - link received {args.url}')
+        print(f'\u21B3 YaMusic Wrapper - link received {match.group()}')
         answer = match.groupdict()
         res_parse = dataparse(
             answer["ntrack"]) if answer.get("track") is None else dataparse(answer["track"])
@@ -65,11 +66,13 @@ def main():
         if res_parse.album is not None:
             print(f'\u21B3 Track from the album - {res_parse.album}')
         print(f'\u21B3 Performer - {res_parse.artist.name}')
-        print(f'  \u21B3 About the performer - {res_parse.artist.about}')
-        print(f'  \u21B3 Link to the artist - {res_parse.artist.link}')
-        print(f'  \u21B3 Link to the artist\'s avatar - {res_parse.artist.avatar}')
+        for i, k in enumerate(res_parse.artist.avatar_about):
+            print(f'  \u21B3 About {k} - {res_parse.artist.avatar_about[k][1]}')
+            print('  \u21B3 Link to the artist - '
+                  f'{ReParser.YANDEX_MUSIC_ARTIST+res_parse.artist.links[i][0]}/info')
+            print(f'  \u21B3 Link to the artist\'s avatar - {res_parse.artist.avatar_about[k][0]}')
         print(f'\u21B3 Genres - {res_parse.genre}')
-        print(f'\u21B3 Year of release - {res_parse.date}')
+        print(f'\u21B3 Year of release - {res_parse.date} | Label - {res_parse.label}')
 
     else: print('the link you specified does not match the format\n'
                 +EXAMPLE_LINKS[0]+'\nor\n'+EXAMPLE_LINKS[1])

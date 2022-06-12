@@ -26,6 +26,8 @@ class Request:
             try:
                 async with session.get(self.url) as response:
 
+                    # print(response.status)
+
                     if response.status == 200:
                         return await response.text()
 
