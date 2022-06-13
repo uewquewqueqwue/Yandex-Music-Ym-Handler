@@ -4,22 +4,27 @@ from typing import List, NamedTuple
 from re_parsing.simple_request import Request
 
 # TODO
-# multi labels
-
+# track time
 # search down from the link class="d-track__name" before class="d-track__end"
 # below it is a link с href="/album/12189572/track/71495455"
 
 # FIXME
-# extra requests on the performer
+# -----------
 
 # UPDATED
+# 2022-06-12
 # non-existent links
 # label
 # not correct name song
 # multiple performers*
 # about performers*
 
-# Maybe
+# 2022-06-14
+# extra requests on the performer
+# (from 6 seconds to 1.2 for one artist, and 2.4 for two or more)
+# multi labels
+
+# MAYBE
 # explicit ?
 # similar tracks ?
 # new albums of the genre ?
@@ -35,7 +40,7 @@ class Artist(NamedTuple):
 class ReParser:
     """returns does a search on the available pages"""
 
-    YANDEX_IMAGES: str = 'https://avatars.yandex.net/get-music-content/'
+    __YANDEX_IMAGES: str = 'https://avatars.yandex.net/get-music-content/'
     YANDEX_MUSIC_ARTIST: str = 'https://music.yandex.ru/artist/'
 
     def __init__(self, url: str):
@@ -88,14 +93,14 @@ class ReParser:
         temp_artist_links: dict = {}
         if len(temp_artist_link_artists) > 1:
             for i in temp_artist_link_artists:
-                temp_artist_links[i[1]] = [GetArtist(i[0], self.url).artist_avatar()]
-                temp_artist_links[i[1]] += [GetArtist(i[0], self.url).artist_about()]
+                get_artist_request = GetArtist(i[0])
+                temp_artist_links[i[1]] = [
+                    get_artist_request.artist_avatar(), get_artist_request.artist_about()]
                 print(f'  \u21B3 The performer: {i[1]}, his description, avatar were received')
         else:
-            temp_artist_links[temp_artist_link_artists[0][1]] = [GetArtist(
-                temp_artist_link_artists[0][0], self.url).artist_avatar()]
-            temp_artist_links[temp_artist_link_artists[0][1]] += [GetArtist(
-                temp_artist_link_artists[0][0], self.url).artist_about()]
+            get_artist_request = GetArtist(temp_artist_link_artists[0][0])
+            temp_artist_links[temp_artist_link_artists[0][1]] = [
+                get_artist_request.artist_avatar(), get_artist_request.artist_about()]
             print(f'  \u21B3 The performer: {temp_artist_link_artists[0][1]}, '
                   'his description, avatar were received')
         print('----------------------------------------------------') # decoration
@@ -146,9 +151,9 @@ class ReParser:
     def get_label(self) -> str:
         """return label"""
 
-        return re.findall(
+        return ', '.join(re.findall(
             r"<a\shref=\"/label/\d+\"\sclass=\"d-link\sdeco-link\">(.+?[^<]*)",
-            self.parse, re.M,)[0]
+            self.parse, re.M,))
 
 
     @classmethod
@@ -156,22 +161,17 @@ class ReParser:
         """ we get a link to the full size of the image"""
 
         return (
-            cls.YANDEX_IMAGES+sym_image
+            cls.__YANDEX_IMAGES+sym_image
             .split(";")[-3][:-4]+'/'+sym_image
             .split(";")[-2][:-4]+'/m1000x1000')
+
 
 class GetArtist(ReParser):
     """all info of artist"""
 
-    def __init__(self, artist_code, url):
-        self.art_c = artist_code
-        super().__init__(url)
+    def __init__(self, artist_code):
+        super().__init__(self.YANDEX_MUSIC_ARTIST+artist_code+'/info')
 
-    def artist_request(self) -> str:
-        """request artist info page"""
-
-        return Request(
-            self.YANDEX_MUSIC_ARTIST+self.art_c+'/info').parse_url()
 
     def artist_name(self):
         """return artist name"""
@@ -185,7 +185,7 @@ class GetArtist(ReParser):
 
         temp_artist_avatar: str = re.search(
             r"<img\ssrc=\"[^/blocks](.+?[^\"]*)",
-            self.artist_request(), re.M,).groups()[0]
+            self.parse, re.M,).groups()[0]
 
         if re.search(r"\bw=\b",temp_artist_avatar):
             temp_artist_avatar_end: str = '&'
@@ -202,7 +202,7 @@ class GetArtist(ReParser):
 
         temp_artist_about: List[str] = re.findall(
             r"<div\sclass=\"page-artist__description\stypo\">(.+?[^<]*)",
-            self.artist_request(), re.M,)
+            self.parse, re.M,)
 
         if len(temp_artist_about) < 1:
             return 'There is no description'
