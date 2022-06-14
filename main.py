@@ -80,7 +80,7 @@ def main():
                   f'{ReParser.YANDEX_MUSIC_ARTIST+res_parse.artist.links[i][0]}/info')
             print(f'  \u21B3 Link to the artist\'s avatar - {res_parse.artist.avatar_about[k][0]}')
         print(f'\u21B3 Genres - {res_parse.genre}')
-        print(f'\u21B3 Year of release - {res_parse.date} | Label - {res_parse.label}')
+        print(f'\u21B3 Year of release - {res_parse.date} | Labels - {res_parse.label}')
 
     else: print('the link you specified does not match the format\n'
                 +EXAMPLE_LINKS[0]+'\nor\n'+EXAMPLE_LINKS[1])
