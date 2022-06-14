@@ -103,7 +103,7 @@ class ReParser:
                 get_artist_request = GetArtist(i[0])
                 temp_artist_links[i[1]] = [
                     get_artist_request.artist_avatar(), get_artist_request.artist_about()]
-                print(f'  \u21B3 Performers: {i[1]}, their description, avatars were received')
+                print(f' \u21B3 The performer: {i[1]}, his description, avatar were received')
         else:
             get_artist_request = GetArtist(temp_artist_link_artists[0][0])
             temp_artist_links[temp_artist_link_artists[0][1]] = [
