@@ -53,7 +53,7 @@ def main():
                         metavar = '', help = 'Specify the link like this: -u link')
     args = parses.parse_args()
 
-    print('\nYandex-Music-Link-Wrapper v.0.1 - by uewquewqueqwue(only regex)')
+    print('\nYandex-Music-Link-Wrapper v.1.0 - by uewquewqueqwue(only regex)')
     print('----------------------------------------------------')
 
     pat = r"^https://music[.]yandex[.]ru/album/((?P<track>[\d]*/track/[\d]*)|(?P<ntrack>[\d]*[^/]))"
