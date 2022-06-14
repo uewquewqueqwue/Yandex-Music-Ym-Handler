@@ -19,6 +19,7 @@ class Track(NamedTuple):
     label: str
     album: str
     infotype: str
+    tracktime: str
 
 
 def dataparse(end: str) -> Track:
@@ -27,15 +28,18 @@ def dataparse(end: str) -> Track:
     if end.isdigit():
         parses = ReParser(YANDEX_MUSIC_ALBUM+end)
         title, album, infotype = parses.get_album_name(), None, 'album'
+        tracktime = None
     else:
         parses = ReParser(YANDEX_MUSIC_ALBUM+end)
         title, infotype = parses.get_track_name(), 'track'
         album = parses.get_album_name_with_track()
+        tracktime = parses.get_tracktime(end)
 
 
     return (Track(title = title, img = parses.get_img(), artist = parses.get_artist(),
             genre = parses.get_genre(), date = parses.get_date(),
-            label= parses.get_label(), album = album, infotype = infotype))
+            label= parses.get_label(), album = album, infotype = infotype,
+            tracktime = tracktime))
 
 
 def main():
@@ -64,7 +68,11 @@ def main():
         print(f'\u21B3 {temp} title - {res_parse.title}')
         print(f'\u21B3 {temp} cover - {res_parse.img}')
         if res_parse.album is not None:
-            print(f'\u21B3 Track from the album - {res_parse.album}')
+            # print(f'\u21B3 {res_parse.album}(album) | '
+                #   f'{res_parse.artist.name} ('
+                #   f'{res_parse.tracktime})')
+            print(f'\u21B3 Track from the album - {res_parse.album} | '
+                  f'Track time - {res_parse.tracktime}')
         print(f'\u21B3 Performer - {res_parse.artist.name}')
         for i, k in enumerate(res_parse.artist.avatar_about):
             print(f'  \u21B3 About {k} - {res_parse.artist.avatar_about[k][1]}')

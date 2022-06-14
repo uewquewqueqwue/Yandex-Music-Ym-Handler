@@ -4,12 +4,10 @@ from typing import List, NamedTuple
 from re_parsing.simple_request import Request
 
 # TODO
-# track time
-# search down from the link class="d-track__name" before class="d-track__end"
-# below it is a link с href="/album/12189572/track/71495455"
+# ------------
 
 # FIXME
-# -----------
+# ------------
 
 # UPDATED
 # 2022-06-12
@@ -19,10 +17,12 @@ from re_parsing.simple_request import Request
 # multiple performers*
 # about performers*
 
-# 2022-06-14
+# 2022-06-14|1:00AM
 # extra requests on the performer
-# (from 6 seconds to 1.2 for one artist, and 2.4 for two or more)
 # multi labels
+
+# 2022-06-14|7:30AM
+# track time, as well as a fix of possible incorrect links for this
 
 # MAYBE
 # explicit ?
@@ -132,7 +132,22 @@ class ReParser:
             # return self.get_album_name()
             return temp[0][1]
 
+        print('  \u21B3 Your link is correct, but it contains a non-existent track, '
+              'information about the album will be displayed')
         return self.get_album_name()
+
+    def get_tracktime(self, track) -> str:
+        """return track time"""
+
+        temp = re.findall(
+            (fr"class=\"d-track__name\".+?[^<]*<a\shref=\"/album/{track}\""
+             r".+?typo-track deco-typo-secondary\">(\w+[^<]*)"),
+            self.parse, re.M,)
+
+        if len(temp) != 0:
+            return temp[0]
+
+        return 'incorrect track id, album is shown'
 
     def get_genre(self) -> str:
         """we get the genre of the track (album)"""
