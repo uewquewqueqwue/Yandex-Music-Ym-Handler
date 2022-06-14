@@ -64,7 +64,7 @@ def main():
         answer = match.groupdict()
         res_parse = dataparse(
             answer["ntrack"]) if answer.get("track") is None else dataparse(answer["track"])
-        temp = 'Album' if res_parse[-1] == 'album' else 'Track'
+        temp = 'Album' if res_parse.infotype == 'album' else 'Track'
         print(f'\u21B3 {temp} title - {res_parse.title}')
         print(f'\u21B3 {temp} cover - {res_parse.img}')
         if res_parse.album is not None:
