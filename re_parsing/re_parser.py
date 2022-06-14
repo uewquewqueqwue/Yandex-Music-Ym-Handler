@@ -47,6 +47,13 @@ class ReParser:
         self.url: str = url
         self.parse: str = Request(self.url).parse_url()
 
+    @classmethod
+    def check_len(cls, lst: list):
+        """checking the length of the list"""
+        if len(lst) != 0:
+            return lst
+        return None
+
 
     def get_img(self) -> str:
         """getting a list of link elements"""
@@ -96,7 +103,7 @@ class ReParser:
                 get_artist_request = GetArtist(i[0])
                 temp_artist_links[i[1]] = [
                     get_artist_request.artist_avatar(), get_artist_request.artist_about()]
-                print(f'  \u21B3 The performer: {i[1]}, his description, avatar were received')
+                print(f'  \u21B3 Performers: {i[1]}, their description, avatars were received')
         else:
             get_artist_request = GetArtist(temp_artist_link_artists[0][0])
             temp_artist_links[temp_artist_link_artists[0][1]] = [
@@ -126,14 +133,16 @@ class ReParser:
             r"<a(?:\s+[^>]*)href=\"/album/([\w]*)\"\sclass=\"d-link\sdeco-link\">(.+?[^<]*)",
             self.parse, re.M,)
 
-        if len(temp) != 0:
+        if not self.check_len(temp) is None:
+        # if len(temp) != 0:
             # if len(temp[0]) > 1:
             #     return temp[0][1]
-            # return self.get_album_name()
             return temp[0][1]
+            # return self.get_album_name()
 
         print('  \u21B3 Your link is correct, but it contains a non-existent track, '
               'information about the album will be displayed')
+
         return self.get_album_name()
 
     def get_tracktime(self, track) -> str:
@@ -144,7 +153,7 @@ class ReParser:
              r".+?typo-track deco-typo-secondary\">(\w+[^<]*)"),
             self.parse, re.M,)
 
-        if len(temp) != 0:
+        if not self.check_len(temp) is None:
             return temp[0]
 
         return 'incorrect track id, album is shown'
