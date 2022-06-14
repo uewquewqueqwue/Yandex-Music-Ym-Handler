@@ -58,7 +58,7 @@ class ReParser:
     def get_img(self) -> str:
         """getting a list of link elements"""
 
-        print('  \u21B3 YaMusic Wrapper - the request is successful! Expect') # decoration
+        print('  \u21B3 YaMusic-Link-Wrapper - the request is successful! Expect') # decoration
         print('----------------------------------------------------') # decoration
 
         pat: list = (r"<img(?:\s+[^>]*)class=\"entity-cover__image\s"

@@ -60,7 +60,7 @@ def main():
     match = re.search(pat, args.url)
 
     if match:
-        print(f'\u21B3 YaMusic Wrapper - link received {match.group()}')
+        print(f'\u21B3 YaMusic-Link-Wrapper - link received {match.group()}')
         answer = match.groupdict()
         res_parse = dataparse(
             answer["ntrack"]) if answer.get("track") is None else dataparse(answer["track"])
