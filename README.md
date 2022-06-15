@@ -1,3 +1,3 @@
 # Yandex-Music-Link-Wrapper
 
-## slow a small version of the wrapper for links, yandex music
+## Slow and small version of the wrapper for yandex music links.
