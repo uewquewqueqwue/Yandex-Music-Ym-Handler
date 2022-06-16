@@ -25,7 +25,7 @@ from re_parsing.simple_request import Request
 # track length, as well as a fix of possible incorrect links for this
 
 # 2022-6-15|3:00AM
-# number of songs in the album
+# number of songs on the album
 
 # 2022-6-15|6:30PM
 # fixed the length of the track, as well as the author and
@@ -35,6 +35,7 @@ from re_parsing.simple_request import Request
 # now the list of artists is always returned
 
 # Additional parameters(MAYBE)
+# time of the whole album
 # explicit ?
 # similar tracks ?
 # new albums of the genre ?

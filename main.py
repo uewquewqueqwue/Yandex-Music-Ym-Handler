@@ -72,7 +72,7 @@ def main() -> None:
     )
     args = parses.parse_args()
 
-    print("\nYandex-Music-Link-Wrapper v1.1 - by uewquewqueqwue(only regex)")
+    print("\nYandex-Music-Link-Wrapper v1.1 - by uewquewqueqwue(only regex)[qdissh@gmail.com]")
     print("----------------------------------------------------")
 
     pat = (
