@@ -1,5 +1,6 @@
 import re
-from typing import List, NamedTuple
+from datetime import timedelta
+from typing import NamedTuple
 
 from re_parsing.simple_request import Request
 
@@ -7,7 +8,7 @@ from re_parsing.simple_request import Request
 # ------------
 
 # FIXME
-# ------------
+# if the avatar does not exist, someone else's is taken
 
 # UPDATED
 # 2022-6-12
@@ -34,66 +35,90 @@ from re_parsing.simple_request import Request
 # 2022-6-15|1:40AM
 # now the list of artists is always returned
 
+# 2022-6-16|10:10PM
+# the length of the entire album(timedelta)
+# links(list)
+
+# 2022-6-16|01:05AM
+# moved to a separate function, which means that it
+# can be used everywhere separately from main
+
 # Additional parameters(MAYBE)
-# time of the whole album
-# explicit ?
+# explicit ?timedelta
 # similar tracks ?
 # new albums of the genre ?
 # albums of the user ?
+
+
+def _convert_to_timedelta(lst: list) -> timedelta:
+    """converts input data to timedelta format"""
+
+    seconds = 0
+    for i in lst:
+        numb_a, numb_b = list(map(int, i.split(":")))
+        numb_a *= 60
+        seconds += numb_a + numb_b
+
+    return timedelta(seconds=seconds)
+
+
+def _default_links(lst: list) -> list:
+    """return a list of links"""
+
+    return_list = []
+    for i in lst:
+        return_list.extend([ReParser.YANDEX_MUSIC_ARTIST + i[0]])
+
+    return return_list
+
+
+def _full_size_image(sym_image: str) -> str:
+    """we get a link to the full size of the image"""
+
+    return (
+        ReParser.YANDEX_IMAGES
+        + sym_image.split(";")[-3][:-4]
+        + "/"
+        + sym_image.split(";")[-2][:-4]
+        + "/m1000x1000"
+    )
+
+
+def _check_len(lst: list) -> list | None:
+    """checking the length of the list"""
+
+    if len(lst) != 0:
+        return lst
+    return None
+
+
+def _fix_symbol(item: list | str) -> list:
+    """corrects the ' character in strings"""
+
+    if isinstance(item, list):
+        return list(map(lambda x: x.replace("&#39;", "'"), item))
+    if isinstance(item, tuple):
+        return list(map(lambda x: x.replace("&#39;", "'"), item))
+    return [item.replace("&#39;", "'")]
 
 
 class Artist(NamedTuple):
     """returns the data container"""
 
     links: list
-    names: str | list
+    names: list
     avatar_about: dict
 
 
 class ReParser:
     """returns does a search on the available pages"""
 
-    __YANDEX_IMAGES: str = "https://avatars.yandex.net/get-music-content/"
+    YANDEX_IMAGES: str = "https://avatars.yandex.net/get-music-content/"
     YANDEX_MUSIC_ARTIST: str = "https://music.yandex.ru/artist/"
 
     def __init__(self, url: str):
         self.url: str = url
         self.parse: str = Request(self.url).parse_url()
-
-    @classmethod
-    def check_len(cls, lst: list) -> List | None:
-        """checking the length of the list"""
-
-        if len(lst) != 0:
-            return lst
-        return None
-
-    @classmethod
-    def fix_symbol(cls, item: list | str) -> List:
-        """corrects the ' character in strings"""
-
-        if isinstance(item, list):
-            return list(map(lambda x: x.replace("&#39;", "'"), item))
-        if isinstance(item, tuple):
-            return list(map(lambda x: x.replace("&#39;", "'"), item))
-        return [item.replace("&#39;", "'")]
-
-    def check_collection(self):
-        """checks whether this album is a compilation"""
-
-        try:
-            if (
-                re.findall(
-                    r"<span\sclass=\"deco-typo-secondary\s+\">(.+?)</",
-                    self.parse,
-                    re.M,
-                )[0]
-                == "сборник"
-            ):
-                return "collection"
-            return None
-        except IndexError:
-            return None
 
     def get_img(self) -> str:
         """getting a list of link elements"""
@@ -111,7 +136,7 @@ class ReParser:
         temp: str = re.findall(pat, self.parse, re.M,)[
             0
         ][1]
-        return ReParser.get_full_size_image(temp)
+        return _full_size_image(temp)
 
     def get_track_name(self) -> str:
         """we get the name of the song"""
@@ -124,7 +149,7 @@ class ReParser:
                 self.parse,
                 re.M,
             )[-1]
-            return self.fix_symbol(temp)[0]
+            return _fix_symbol(temp)[0]
 
         return self.get_album_name()
 
@@ -149,8 +174,7 @@ class ReParser:
             temp_artist_link_block,
             re.M,
         )
-
-        temp_artist_link_artists = list(map(self.fix_symbol, temp_artist_link_artists))
+        temp_artist_link_artists = list(map(_fix_symbol, temp_artist_link_artists))
 
         temp_artist_links: dict = {}
         if len(temp_artist_link_artists) > 1:
@@ -167,10 +191,10 @@ class ReParser:
             print("----------------------------------------------------")  # decoration
             return Artist(
                 names=list(temp_artist_links.keys()),
-                links=temp_artist_link_artists,
+                links=_default_links(temp_artist_link_artists),
                 avatar_about=temp_artist_links,
             )
-        if self.check_collection() is not None:
+        if self.check_collection():
             print(
                 "  \u21B3 This is a collection, it contains a lot of "
                 "performers\n(in the future, it is possible for an additional "
@@ -178,10 +202,11 @@ class ReParser:
             )
             print("----------------------------------------------------")  # decoration
             return Artist(
-                names="A lot of artists, because this is a collection",
-                links=temp_artist_link_artists,
+                names=["A lot of artists, because this is a collection"],
+                links=self.get_default_links(temp_artist_link_artists),
                 avatar_about=None,
             )
+
         get_artist_request = GetArtist(temp_artist_link_artists[0][0])
         temp_artist_links[temp_artist_link_artists[0][1]] = [
             get_artist_request.artist_avatar(),
@@ -193,8 +218,8 @@ class ReParser:
         )
         print("----------------------------------------------------")  # decoration
         return Artist(
-            names=temp_artist_link_artists[0][1],
-            links=temp_artist_link_artists,
+            names=[temp_artist_link_artists[0][1]],
+            links=_default_links(temp_artist_link_artists),
             avatar_about=temp_artist_links,
         )
 
@@ -206,7 +231,7 @@ class ReParser:
             self.parse,
             re.M,
         )
-        return self.fix_symbol(temp)[0]
+        return _fix_symbol(temp)[0]
 
     def get_album_name_with_track(self) -> str:
         """getting the name from the track page
@@ -223,11 +248,11 @@ class ReParser:
             re.M,
         )
 
-        if self.check_len(temp) is not None:
+        if _check_len(temp) is not None:
             # if len(temp) != 0:
             # if len(temp[0]) > 1:
             #     return temp[0][1]
-            return self.fix_symbol(temp[0][1])[0]
+            return _fix_symbol(temp[0][1])[0]
             # return self.get_album_name()
 
         print(
@@ -240,9 +265,6 @@ class ReParser:
     def get_tracktime(self, track) -> str:
         """return track time"""
 
-        if self.check_collection() is not None:
-            return "this is a compilation\n(its full time will be available in the next version)"
-
         temp = re.findall(
             (
                 rf"class=\"d-track__name\".+?[^<]*<a\shref=\"/album/{track}\""
@@ -252,10 +274,10 @@ class ReParser:
             re.M,
         )
 
-        if self.check_len(temp) is not None:
-            return temp[0]
+        if _check_len(temp) is not None:
+            return _convert_to_timedelta([temp[0]])
 
-        return "incorrect track id, album is shown"
+        return self.length_all_tracks()
 
     def get_genre(self) -> str:
         """we get the genre of the track (album)"""
@@ -300,17 +322,29 @@ class ReParser:
             )
         )
 
-    @classmethod
-    def get_full_size_image(cls, sym_image: str) -> str:
-        """we get a link to the full size of the image"""
+    def check_collection(self) -> bool:
+        """checks whether this album is a compilation"""
 
-        return (
-            cls.__YANDEX_IMAGES
-            + sym_image.split(";")[-3][:-4]
-            + "/"
-            + sym_image.split(";")[-2][:-4]
-            + "/m1000x1000"
+        temp = re.findall(
+            r"<span\sclass=\"deco-typo-secondary\s+\">(.+?)</",
+            self.parse,
+            re.M,
         )
+        if not temp or temp[0] != "сборник":
+            return False
+        return True
+
+    def length_all_tracks(self) -> list:
+        """return the length of the entire album(timedelta)"""
+
+        temp = re.findall(
+            r"<div\sclass=\"d-track\stypo-track\sd-track_selecta"
+            r"ble.+?typo-track deco-typo-secondary\">(\w+[^<]*)",
+            self.parse,
+            re.M,
+        )
+
+        return _convert_to_timedelta(temp)
 
 
 class GetArtist(ReParser):
@@ -345,12 +379,12 @@ class GetArtist(ReParser):
                 "&#38", "&"
             )
 
-        return self.get_full_size_image(temp_artist_avatar)
+        return _full_size_image(temp_artist_avatar)
 
     def artist_about(self) -> str:
         """return artist about"""
 
-        temp_artist_about: List[str] = re.findall(
+        temp_artist_about: list[str] = re.findall(
             r"<div\sclass=\"page-artist__description\stypo\">(.+?[^<]*)",
             self.parse,
             re.M,
