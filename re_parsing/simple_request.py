@@ -18,6 +18,15 @@ class Request:
 
         return self.event_loop.run_until_complete(self.request())
 
+    def time_parse(self):
+        """_summary_
+
+        Returns:
+            _type_: _description_
+        """
+
+        return self.event_loop.run_until_complete(self.download_image())
+
     async def request(self) -> str | None:
         """request wrapper"""
 
@@ -45,3 +54,13 @@ class Request:
                     f"Unknown error, send her to author. Error: {error}\n"
                     "please contact me(qdissh@gmail.com)"
                 )
+
+    async def download_image(self):
+        """_"""
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(self.url) as response:
+                if response.status == 200:
+                    response_bytes = await response.read()
+                    with open('image.jpg', 'wb') as file:
+                        file.write(response_bytes)
