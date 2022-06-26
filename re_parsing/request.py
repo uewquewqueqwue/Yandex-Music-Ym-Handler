@@ -1,5 +1,4 @@
 import asyncio
-import sys
 
 import aiohttp
 
@@ -9,7 +8,7 @@ class Request:
 
     HEADERS: dict = {"User-Agent": "Magic Browser"}
 
-    def __init__(self, url: str):
+    def __init__(self, url: str) -> None:
         self.url: str = url
         self.event_loop = asyncio.get_event_loop()
 
@@ -18,7 +17,7 @@ class Request:
 
         return self.event_loop.run_until_complete(self.request())
 
-    def time_parse(self):
+    def parse_img(self) -> None:
         """_summary_
 
         Returns:
@@ -31,31 +30,17 @@ class Request:
         """request wrapper"""
 
         async with aiohttp.ClientSession(headers=self.HEADERS) as session:
-            try:
-                async with session.get(self.url) as response:
+            async with session.get(self.url) as response:
+                if response.status == 200:
+                    return await response.text()
 
-                    if response.status == 200:
-                        return await response.text()
+                if response.status == 400:
+                    raise TypeError(
+                        "Track or album not found, check your link "
+                        "for correctness"
+                    )
 
-                    if response.status == 404:
-                        print(
-                            "Track or album not found, check your link "
-                            "for correctness"
-                        )
-                        return sys.exit()
-
-            except aiohttp.ClientConnectionError:
-
-                return "Error request!"
-
-            except Exception as error:  # pylint: disable = broad-except
-
-                return (
-                    f"Unknown error, send her to author. Error: {error}\n"
-                    "please contact me(qdissh@gmail.com)"
-                )
-
-    async def download_image(self):
+    async def download_image(self) -> None:
         """_"""
 
         async with aiohttp.ClientSession() as session:
