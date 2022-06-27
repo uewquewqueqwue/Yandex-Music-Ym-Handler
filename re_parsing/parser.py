@@ -1,5 +1,9 @@
 import re
+import os
 from datetime import timedelta
+
+from braillert.colors import RICH_COLORS, RICH_RESETTER
+from braillert.generator import generate_art
 
 from re_parsing.request import Request
 
@@ -9,10 +13,7 @@ YM = " https://music.yandex.com/"
 YM_ARTIST = "https://music.yandex.com/artist/"
 YM_ALBUM = "https://music.yandex.com/album/"
 YM_IMAGES = "https://avatars.yandex.net/get-music-content/"
-EXAMPLE_LINKS = (
-    "https://music.yandex.com/album/123123",
-    "https://music.yandex.com/album/123123/track/123123",
-)
+
 
 # Utilitarian functions
 
@@ -30,7 +31,7 @@ def _convert_to_timedelta(lst: list) -> timedelta:
 
 
 def _default_links(lst: list) -> list:
-    """return a list of links"""
+    """return a list of ulrs"""
 
     return_list = []
     for i in lst:
@@ -40,7 +41,7 @@ def _default_links(lst: list) -> list:
 
 
 def _full_size_image(sym_image: str) -> str:
-    """we get a link to the full size of the image"""
+    """return the full size of the image"""
 
     return (
         YM_IMAGES
@@ -69,17 +70,14 @@ def _fix_symbol(item: str | tuple | list) -> list:
         "&#47;": "\u002F",
         "&#34;": "\u0022",
     }
-    done_str = item
-    if isinstance(item, str):
-        for i, j in symbol_case.items():
-            done_str = item.strip().replace(i, j)
 
-        return [done_str]
+    if isinstance(item, str):
+        item = [item]
 
     for i, j in symbol_case.items():
-        done_str = list(map(lambda a: a.strip().replace(i, j), done_str))
+        item = list(map(lambda a: a.strip().replace(i, j), item))
 
-    return done_str
+    return item
 
 
 # Album class
@@ -87,7 +85,7 @@ def _fix_symbol(item: str | tuple | list) -> list:
 
 
 class Album:
-    """_summary_"""
+    """return class album"""
 
     def __init__(self, parse: str) -> None:
         self.__parse = parse
@@ -118,7 +116,7 @@ class Album:
 
     @property
     def length(self) -> timedelta:
-        """return the length of the entire album(timedelta)"""
+        """return the length of the entire album"""
 
         return _convert_to_timedelta(
             re.findall(
@@ -135,18 +133,19 @@ class Album:
 
 
 class Track:
-    """_summary_"""
+    """return class track"""
 
     def __init__(self, parse: str, track_id: str) -> None:
         self.__parse = self.check_id(parse)
         self.__track_id = track_id
         self.__name = None
         self.__length = None
-        # self.__length = None
+        self.__similar_tracks = None
+        self.__album_name = None
 
     @classmethod
     def check_id(cls, parse: str) -> str:
-        """_summary_"""
+        """checking correct id"""
 
         check_correct = re.search(r"<title>(\w+)", parse).groups()
         check_correct_ = re.search(
@@ -158,11 +157,11 @@ class Track:
         ):
             return parse
 
-        raise TypeError("Нет такого ид")
+        raise TypeError("There is no such track id")
 
     @property
     def name(self) -> str:
-        """_summ"""
+        """return track name"""
 
         if not self.__name:
             return _fix_symbol(
@@ -178,7 +177,7 @@ class Track:
 
     @property
     def length(self) -> timedelta:
-        """_sum"""
+        """return the length of the track"""
 
         if not self.__length:
             return _convert_to_timedelta(
@@ -197,62 +196,102 @@ class Track:
         return self.__length
 
     @property
-    def similar_tracks(self):
-        """_s"""
+    def similar_tracks(self) -> list:
+        """return similar tracks"""
 
-        temp = re.search(
-            r"sidebar__section-title\stypo-caps\sdeco-typo-seco"
-            r"ndary.+?class=\"footer\"",
-            self.__parse,
-            re.M,
-        )
+        if not self.__similar_tracks:
+            temp = re.search(
+                r"sidebar__section-title\stypo-caps\sdeco-typo-seco"
+                r"ndary.+?class=\"footer\"",
+                self.__parse,
+                re.M,
+            )
 
-        return _fix_symbol(
-            list(
-                map(
-                    lambda x: x.strip(),
-                    re.findall(
-                        r"d-track__title\sdeco-link\sdeco-link_stronger\">(.+?[^<]*)",
-                        temp[0],
-                        re.M,
-                    ),
+            return _fix_symbol(
+                list(
+                    map(
+                        lambda x: x.strip(),
+                        re.findall(
+                            r"d-track__title\sdeco-link\sdeco-link_stronger\">(.+?[^<]*)",
+                            temp[0],
+                            re.M,
+                        ),
+                    )
                 )
             )
-        )
+
+        return self.__similar_tracks
+
+    @property
+    def album_name(self) -> str:
+        """return album name"""
+
+        if not self.__album_name:
+            return _fix_symbol(
+                re.findall(
+                    r"page-album__title\stypo-h1_big.+?link\">(.+?[^<]*)",
+                    self.__parse,
+                    re.M,
+                )
+            )[0]
+
+        return self.__album_name
 
 
 class Artist:
-    """_s"""
+    """return Artist class"""
 
     def __init__(self, artist_code: str) -> None:
-        print("artist")
         self.__parse = Request(YM_ARTIST + artist_code + "/info").parse_url()
+        self.url = YM_ARTIST + artist_code
         self.__name = None
         self.__avatar = None
         self.__about = None
         self.__likes_month = None
         self.__listeners_month = None
 
-    # def __getattr__(self, item):
-    #     if item in ArtistAdd.__dict__:
-    #         raise AttributeError("These attributes are not in Artist, use ArtistAdd")
+    def __getattr__(self, item):
+        if item in ArtistDetails.__dict__:
+            raise AttributeError(
+                "These attributes are not in Artist, use ArtistDetails"
+            )
+        # if item in ArtistDetails.__dict__:
+        #     raise AttributeError("These attributes are not in Artist, use ArtistAdd")
 
     @property
     def name(self) -> str:
         """return artist name"""
 
         if not self.__name:
-            self.__name = re.search(
-                r"<h1.+?>(\w+)<",
-                self.__parse,
-                re.M,
-            ).groups()[0]
+            return _fix_symbol(
+                re.search(
+                    r"<h1(?:\s+[^>]*)>(.+?[^<]*)",
+                    self.__parse,
+                    re.M,
+                ).groups()
+            )[0]
 
         return self.__name
 
     @property
-    def avatar(self) -> str:
-        """return artist avatar"""
+    def about(self) -> str | None:
+        """return artist about"""
+
+        if not self.__about:
+            temp_artist_about: list[str] = re.findall(
+                r"<div\sclass=\"page-artist__description\stypo\">(.+?[^<]*)",
+                self.__parse,
+                re.M,
+            )
+
+            if temp_artist_about:
+                return _fix_symbol(temp_artist_about)[0]
+
+        return self.__about
+
+    @property
+    def avatar(self) -> str | None:
+        """return artist avatar url"""
 
         if not self.__avatar:
             if re.findall(r"artist-pics__pic\sartist-pics__pic_empty", self.__parse):
@@ -275,54 +314,49 @@ class Artist:
         return self.__avatar
 
     @property
-    def about(self) -> str | None:
-        """return artist about"""
-
-        if not self.__about:
-            temp_artist_about: list[str] = re.findall(
-                r"<div\sclass=\"page-artist__description\stypo\">(.+?[^<]*)",
-                self.__parse,
-                re.M,
-            )
-
-            if temp_artist_about:
-                return _fix_symbol(temp_artist_about)[0]
-
-        return self.__about
-
-    @property
     def likes_month(self) -> int:
-        """_su"""
+        """returns the number of likes per month"""
 
         if not self.__likes_month:
-            return int(re.search(
-                r"page-section__title\stypo typo-medium.+?\"(?:Лай|Lik).+?total-count\">(\w+[^<]*)",
-                self.__parse,
-                re.M,
-            ).groups()[0])
+            return int(
+                "".join(
+                    re.search(
+                        r"page-section__title\stypo typo-mediu"
+                        r"m.+?\"(?:Лай|Lik).+?total-count\">(\w+[^<]*)",
+                        self.__parse,
+                        re.M,
+                    ).groups()[0]
+                )
+            )
 
         return self.__likes_month
 
     @property
     def listeners_month(self) -> int:
-        """_su"""
+        """returns the number of listeners per month"""
 
         if not self.__listeners_month:
-            return int(re.search(
-                r"page-section__title\stypo typo-medium.+?\"(?:Слу|Lis).+?total-count\">(\w+[^<]*)",
-                self.__parse,
-                re.M,
-            ).groups()[0])
+            return int(
+                "".join(
+                    re.search(
+                        r"page-section__title\stypo typo-mediu"
+                        r"m.+?\"(?:Слу|Lis).+?total-count\">(\w+[^<]*)",
+                        self.__parse,
+                        re.M,
+                    )
+                    .groups()[0]
+                    .split()
+                )
+            )
 
         return self.__listeners_month
 
 
 class ArtistDetails(Artist):
-    """advanced artist class"""
+    """a class for getting great details about an artist"""
 
     def __init__(self, artist_code: str) -> str:
         super().__init__(artist_code)
-        print("artist-details")
         self.__parse = Request(YM_ARTIST + artist_code).parse_url()
         self.__popular_tracks = None
         self.__last_release = None
@@ -330,20 +364,6 @@ class ArtistDetails(Artist):
         self.__playlists = None
         self.__video_names = None
         self.__similar_artists = None
-
-    @property
-    def popular_tracks(self) -> list:
-        """return a list of the artist's popular tracks"""
-
-        if not self.__popular_tracks:
-            temp: list = re.findall(
-                r"d-track__title\sdeco-link\sdeco-link_stronger\">(.+?[^<]*)",
-                self.__parse,
-                re.M,
-            )
-            return _fix_symbol(temp)
-
-        return self.__popular_tracks
 
     @property
     def latest_release(self) -> str | None:
@@ -362,6 +382,20 @@ class ArtistDetails(Artist):
         return self.__last_release
 
     @property
+    def popular_tracks(self) -> list:
+        """return a list of the artist's popular tracks"""
+
+        if not self.__popular_tracks:
+            temp: list = re.findall(
+                r"d-track__title\sdeco-link\sdeco-link_stronger\">(.+?[^<]*)",
+                self.__parse,
+                re.M,
+            )
+            return _fix_symbol(temp)
+
+        return self.__popular_tracks
+
+    @property
     def popular_albums(self) -> list:
         """return a list of popular artsit albums"""
 
@@ -377,8 +411,8 @@ class ArtistDetails(Artist):
         return self.__popular_album
 
     @property
-    def video_names(self):
-        """_su"""
+    def video_names(self) -> list | None:
+        """return a list of music video titles"""
 
         if not self.__video_names:
             return re.findall(
@@ -406,7 +440,7 @@ class ArtistDetails(Artist):
 
     @property
     def similar_artists(self) -> list | None:
-        """_s"""
+        """return similar artists"""
 
         if not self.__similar_artists:
             temp = re.findall(
@@ -424,8 +458,6 @@ class ArtistDetails(Artist):
                     )
                 )
 
-            return None
-
         return self.__similar_artists
 
 
@@ -433,7 +465,7 @@ class ArtistDetails(Artist):
 
 
 class Static:
-    """_s"""
+    """The main class that returns all the static about the incoming url"""
 
     def __init__(self, url: str) -> None:
         self.__parse = self.analysis(url)
@@ -441,9 +473,10 @@ class Static:
         self.__date = None
         self.__labels = None
         self.__cover = None
+        self.__braille_art = None
 
     def analysis(self, url: str) -> str | None:
-        """_s"""
+        """analyzes the incoming url, then makes the necessary requests"""
 
         pat = (
             r"https:\/\/music[.]yandex[.](?:com|ru)\/album\/((?P<track>[\d]+\/tra"
@@ -462,10 +495,9 @@ class Static:
             else:
                 self.type_url = "track"
                 self.__track_id = answer.get("track")
-            print("url")
             return Request(match.group()).parse_url()
 
-        raise TypeError("Неправильная ссылка")
+        raise TypeError("Incorrect URL")
 
     def check_collection(self) -> bool:
         """checks whether this album is a compilation"""
@@ -488,35 +520,37 @@ class Static:
 
     @property
     def album(self) -> Album:
-        """_su"""
+        """return Album class"""
 
         return Album(self.__parse)
 
     @property
     def track(self) -> Track:
-        """_st"""
+        """return Track class"""
 
         return Track(self.__parse, self.__track_id)
 
     def artists(
         self, details: bool = False, creativity: bool = False
-    ) -> Artist | ArtistDetails:
-        """we get (the artist, a link to him,
-        a link to his avatar, his description)"""
+    ) -> list[Artist | ArtistDetails]:
+        """return the Name, Avatar, Description of the artist
+        with a normal request
 
-        temp_artist_link_block: str = re.findall(
-            r"<span\sclass=\"d-artists(.+?)</a></span>",
+        return the Name, Avatar, Description, Latest Release, Popular Tracks,
+        Popular Albums, Playlists, The Name of music videos,
+        Similar artists (8 pieces)."""
+
+        temp_artist_link_block: str = re.search(
+            r"d-artists\sd-artists__expanded\"(.+?[^>]*)</",
             self.__parse,
             re.M,
-        )[0]
+        ).group()
 
         temp_artist_link_artists: list = re.findall(
-            r"href=\"/artist/(\d+)\"\s+[^>]*>(.+?[^<]*)",
+            r"/artist/(\d+)",
             temp_artist_link_block,
             re.M,
         )
-
-        temp_artist_link_artists = list(map(_fix_symbol, temp_artist_link_artists))
 
         if self.check_collection():
             return []
@@ -526,17 +560,17 @@ class Static:
             if details and creativity:
                 pass
             elif details:
-                artists_base.append(ArtistDetails(i[0]))
+                artists_base.append(ArtistDetails(i))
             elif creativity:
                 pass
             else:
-                artists_base.append(Artist(i[0]))
+                artists_base.append(Artist(i))
 
         return artists_base
 
     @property
     def genre(self) -> tuple | None:
-        """we get the genre of the track (album)"""
+        """return a list of genres"""
 
         if not self.__genre:
             temp = re.search(
@@ -555,7 +589,7 @@ class Static:
 
     @property
     def date(self) -> str | None:
-        """we get the date of the track (album)"""
+        """return the release date"""
 
         if not self.__date:
             temp = re.search(
@@ -571,7 +605,7 @@ class Static:
 
     @property
     def labels(self) -> list | None:
-        """we get labels of the track (album)"""
+        """return a list of labels"""
 
         if not self.__labels:
             temp = _fix_symbol(
@@ -589,7 +623,7 @@ class Static:
 
     @property
     def cover(self) -> str | None:
-        """we get the cover url of the track (album)"""
+        """return the url to the cover"""
 
         if not self.__cover:
             check_cover = re.search(
@@ -613,3 +647,14 @@ class Static:
             )
 
         return self.__cover
+
+    def braille_art(self, url: str) -> str:
+        """return the finished braille art"""
+
+        if not self.__braille_art:
+            Request(url).parse_img()
+            cover = generate_art("image.jpg", RICH_COLORS, RICH_RESETTER)
+            os.remove("image.jpg")
+            return cover
+
+        return self.__braille_art

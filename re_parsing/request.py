@@ -18,11 +18,7 @@ class Request:
         return self.event_loop.run_until_complete(self.request())
 
     def parse_img(self) -> None:
-        """_summary_
-
-        Returns:
-            _type_: _description_
-        """
+        """return picture"""
 
         return self.event_loop.run_until_complete(self.download_image())
 
@@ -36,16 +32,15 @@ class Request:
 
                 if response.status == 400:
                     raise TypeError(
-                        "Track or album not found, check your link "
-                        "for correctness"
+                        "Track or album not found, check your link for correctness"
                     )
 
     async def download_image(self) -> None:
-        """_"""
+        """return the downloaded image"""
 
         async with aiohttp.ClientSession() as session:
             async with session.get(self.url) as response:
                 if response.status == 200:
                     response_bytes = await response.read()
-                    with open('image.jpg', 'wb') as file:
+                    with open("image.jpg", "wb") as file:
                         file.write(response_bytes)

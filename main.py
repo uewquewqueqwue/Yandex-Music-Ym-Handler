@@ -1,220 +1,211 @@
 import argparse
-import re
-import sys
-from datetime import timedelta
-from typing import NamedTuple
 
 from rich.console import Console
 from rich.panel import Panel
-# from re_parsing.parser import Static
 
-from re_parsing.re_parser import (
-    ADDITIONALLY,
-    BASIC,
-    ERRNO,
-    GREEN,
-    GREENEND,
-    INFO,
-    PICTURE,
-    ReParser,
-)
+from re_parsing.parser import Static
 
+# Consts
+
+# EXAMPLE_LINKS = (
+#     "https://music.yandex.com/album/123123",
+#     "https://music.yandex.com/album/123123/track/123123",
+# )
+STATIC = "[ [bold red]Ym STATIC[/bold red] ] [bold yellow]\u21AF[/bold yellow]"
+INFO = "[ [bold red]Ym INFO[/bold red] ] [bold yellow]\u21AF[/bold yellow]"
+DETAILS = "[ [bold red]Ym DETAILS[/bold red] ] [bold yellow]\u21AF[/bold yellow]"
+PICTURE = "[ [bold red]Ym PICTURE[/bold red] ]"
+ERRNO = "[ [bold red]Ym ERRNO[/bold red] ] [bold yellow]\u21AF[/bold yellow]"
+GRE = "[bold green]"
+YEL = "[bold yellow]"
+YELEND = "[/bold yellow]"
+GREEND = "[/bold green]"
+VERSION = "v1.12"
 console = Console(highlight=False)
 
-YANDEX_MUSIC_ALBUM: str = "https://music.yandex.ru/album/"
-EXAMPLE_LINKS: tuple = (
-    "https://music.yandex.ru/album/123123",
-    "https://music.yandex.ru/album/123123/track/123123",
-)
-VERSION = "v1.7"
+# Utilitarian functions
 
 
-class Track(NamedTuple):
-    """returns the data container"""
+def decor_join(item: list) -> str:
+    """decorative gluing"""
 
-    title: str
-    img: str
-    artists: list
-    genre: str
-    date: str
-    labels: list
-    tracks: int
-    album_name: str | bool
-    type_link: str
-    length_tracks: timedelta
-    similar_tracks: list
+    return f"{GRE}{f'{GREEND}, {GRE}'.join(item)}{GREEND}"
 
 
-def dataparse(url: str, cover: bool, additional: bool) -> Track:
-    """return ready-made dataparse"""
+def output_artist(nots: str, artists: list, det: bool, creat: bool) -> None:
+    """transferred decor"""
 
-    pat = (
-        r"^https://music[.]yandex[.](?:com|ru)/album/((?P<track>[\d]*/tr"
-        r"ack/[\d]*)|(?P<ntrack>[\d]*[^/]))"
-    )
-    match = re.search(pat, url)
-
-    if match:
-        console.print(f"{INFO} Link received {match.group()}")
-        answer = match.groupdict()
-
-        end = answer["ntrack"] if not answer.get("track") else answer["track"]
-
-        if end.isdigit():
-            parses = ReParser(YANDEX_MUSIC_ALBUM + end)
-            return Track(
-                title=parses.get_album_name(),
-                img=parses.get_img(cover),
-                artists=parses.get_artists(additional),
-                genre=parses.get_genre(),
-                date=parses.get_date(),
-                labels=parses.get_label(),
-                tracks=parses.get_numbers_song(),
-                album_name=False,
-                type_link=parses.get_type_link(),
-                length_tracks=parses.get_length_tracks(end),
-                similar_tracks=False,
-            )
-
-        parses = ReParser(YANDEX_MUSIC_ALBUM + end)
-        return Track(
-            title=parses.get_track_name(),
-            img=parses.get_img(cover),
-            artists=parses.get_artists(additional),
-            genre=parses.get_genre(),
-            date=parses.get_date(),
-            labels=parses.get_label(),
-            tracks=parses.get_numbers_song(),
-            album_name=parses.get_album_name_with_track(),
-            type_link=parses.get_type_link(),
-            length_tracks=parses.get_length_tracks(end),
-            similar_tracks=parses.get_similar_tracks(),
+    for i in artists:
+        console.print(
+            f"{STATIC} About {GRE}{i.name}{GREEND} - "
+            f"{i.about if i.about else nots}",
         )
+        console.print(
+            f"{STATIC} Link to the artist - "
+            f"{GRE}[link={i.url}]ctrl + click me[/link]"
+        )
+        temp_avatar = i.avatar
+        temp_avatar = (
+            f"{GRE}[link={temp_avatar}]ctrl + click me[/link]" if temp_avatar else nots
+        )
+        console.print(f"{STATIC} Link to the artist's avatar - {temp_avatar}")
+        console.print(
+            f"{STATIC} Listeners per month - {GRE}{i.listeners_month}{GREEND} "
+            f"| Likes per month - {GRE}{i.likes_month}"
+        )
+        if det:
+            print()
+            console.print(
+                f"[ [bold red]Ym STATIC {YEL}->{YELEND} Artist details branch"
+                "[/bold red] ] [bold yellow]\u21AF[/bold yellow] Uploaded"
+            )
+            print()
+            console.print(
+                f"{DETAILS} Latest release - "
+                f"{GRE}+{i.latest_release if i.latest_release else nots}"
+            )
+            console.print(
+                f"{DETAILS} Popular tracks - "
+                f"{decor_join(i.popular_tracks) if i.popular_tracks else nots}"
+            )
+            console.print(
+                f"{DETAILS} Popular albums - "
+                f"{decor_join(i.popular_albums) if i.popular_albums else nots}"
+            )
+            console.print(
+                f"{DETAILS} Playlists - "
+                f"{decor_join(i.playlists) if i.playlists else nots}"
+            )
+            console.print(
+                f"{DETAILS} Videos - "
+                f"{decor_join(i.video_names) if i.video_names else nots}"
+            )
+            console.print(
+                f"{DETAILS} Similar artists - "
+                f"{decor_join(i.similar_artists) if i.similar_artists else nots}"
+            )
+        if creat:
+            pass
 
-    console.print(
-        f"{ERRNO} the link you specified does not match the format\n"
-        + EXAMPLE_LINKS[0]
-        + "\nor\n"
-        + EXAMPLE_LINKS[1]
-    )
-    return sys.exit()
 
+def output_console(url: str, det: bool, creat: bool, cover: bool) -> None:
+    """main output
 
-def decor_join(item) -> str:
-    """_"""  # TODO
-
-    return f"{GREEN}{f'{GREENEND}, {GREEN}'.join(item)}{GREENEND}"
-
-
-def output_console(url: str, simt: bool, cover: bool, additional: bool):
-    """return a beautiful output in the console"""
+    Args:
+        url (str): specified url
+        det (bool): artist details
+        creat (bool): artist creativity
+        cover (bool): cover album, track, compilation
+    """
 
     print()
     console.print(
         Panel.fit(
-            f"{GREEN}Yandex-Music-Link-Wrapper{GREENEND} - "
+            f"{GRE}Ym URL Handler{GREEND} - "
             "by [bold red]uewquewqueqwue[/bold red]"
-            f"(only regex) {GREEN}< qdissh@gmail.com >{GREENEND}",
+            f"(only regex \U0001F638 \U0001F63C) {GRE}< qdissh@gmail.com >{GREEND}",
             title="[bold yellow]Information[/bold yellow]",
             subtitle=f"[bold yellow]{VERSION}[/bold yellow]",
         )
     )
+    stat = Static(url)
+    artistsreq = stat.artists(det, creat)
+    print()
+    console.print(f"{INFO} Find out information about the artist")
+    if artistsreq:
+        for i in artistsreq:
+            console.print(
+                f"{INFO} The artist: {GRE}{i.name}{GREEND}, "
+                "his description, avatar were received"
+            )
+            if det:
+                console.print(
+                    f"{INFO} The latest release, popular tracks, "
+                    "popular albums, videos on the page, "
+                    "similar artists have been received!"
+                )
+    else:
+        console.print(f"{INFO} The artists were not uploaded, this is a compilation")
+    print()
 
-    res_parse = dataparse(url, cover, additional)
-
-    temp = "Album" if res_parse.type_link == "album" else "Track"
-    temp_artist = "Artists" if len(res_parse.artists) > 1 else "Artist"
+    nots = f"{GRE}Not specified"
+    temp_artists = "Artists" if len(artistsreq) > 1 else "Artist"
     temp_coll = (
-        decor_join(i.artist_name for i in res_parse.artists)
-        if res_parse.artists
-        else f"{GREEN}Lost of artists{GREENEND}"
+        decor_join(i.name for i in artistsreq)
+        if artistsreq
+        else f"{GRE}Lost of artists{GREEND}"
     )
     if cover:
         console.print(
             Panel.fit(
-                res_parse.img[1],
+                stat.braille_art(stat.cover),
                 title=PICTURE,
                 subtitle="Built with \U0001F49C by ov3rwrite",
             )
         )
         print()
-
-    console.print(f"{BASIC} {temp} title - {GREEN}{res_parse.title}")
-    console.print(
-        f"{BASIC} {temp} cover - "
-        f"{GREEN}[link={res_parse.img[0]}]ctrl + click me[/link]"
-    )
-    if res_parse.type_link == "track":
+    if stat.type_url == "album":
         console.print(
-            f"{BASIC} Track length - {GREEN}" f"{res_parse.length_tracks}{GREENEND}"
+            f"[ [bold red]Ym STATIC {YEL}->{YELEND} Album branch"
+            "[/bold red] ] [bold yellow]\u21AF[/bold yellow] Uploaded"
+        )
+        print()
+        console.print(f"{STATIC} Album title - {GRE}{stat.album.name}")
+        console.print(
+            f"{STATIC} Album cover - {GRE}[link={stat.cover}]ctrl + click me[/link]"
         )
         console.print(
-            f"{BASIC} Album - {GREEN}{res_parse.album_name}{GREENEND} "
-            f"| {GREEN}{res_parse.tracks}{GREENEND} (number of songs in"
-            f"the album)"
+            f"{STATIC} Number of songs in the album - {GRE}"
+            f"{stat.album.number_songs}{GREEND} | the length of the entire "
+            f"album - {GRE}{stat.album.length}{GREEND}"
         )
     else:
         console.print(
-            f"{BASIC} Number of songs in the album - {GREEN}{res_parse.tracks}{GREENEND}"
-            f" | the length of the entire album"
-            f" - {GREEN}{res_parse.length_tracks}{GREENEND}"
+            f"[ [bold red]Ym STATIC {YEL}->{YELEND} Track branch"
+            "[/bold red] ] [bold yellow]\u21AF[/bold yellow] Uploaded"
         )
-    console.print(f"{BASIC} {temp_artist} - {temp_coll}")
-    console.print(f"{BASIC} Genres - {decor_join(res_parse.genre)}")
+        print()
+        console.print(f"{STATIC} Track title - {GRE}{stat.track.name}")
+        console.print(
+            f"{STATIC} Track cover - {GRE}[link={stat.cover}]ctrl + click me[/link]"
+        )
+        console.print(f"{STATIC} Track length - {GRE}{stat.track.length}")
+        console.print(f"{STATIC} Track from the album - {GRE}{stat.track.album_name}")
+        console.print(
+            f"{STATIC} Number of songs in the album - {GRE}"
+            + str(stat.album.number_songs)
+        )
+        console.print(
+            f"{STATIC} The length of the entire album - {GRE}" + str(stat.album.length)
+        )
+    console.print(f"{STATIC} {temp_artists} - {temp_coll}")
+    console.print(f"{STATIC} Genres - {decor_join(stat.genre)}")
     console.print(
-        f"{BASIC} Year of release - {GREEN}{res_parse.date}{GREENEND} | "
-        f"Labels - {decor_join(res_parse.labels)}\n"
+        f"{STATIC} Year of release - {GRE}{stat.date}{GREEND} | "
+        f"Labels - {decor_join(stat.labels)}"
     )
-    # res_parse.artists[0].video_link
-    for i in res_parse.artists:
+    print()
+    if artistsreq:
         console.print(
-            f"{ADDITIONALLY} About {GREEN}{i.artist_name}{GREENEND} - "
-            f"{i.artist_about if i.artist_about else 'There is no description'}"
+            f"[ [bold red]Ym STATIC {YEL}->{YELEND} Artist branch"
+            "[/bold red] ] [bold yellow]\u21AF[/bold yellow] Uploaded"
         )
-        console.print(
-            f"{ADDITIONALLY} Link to the artist - "
-            f"{GREEN}[link={i.artist_link}]ctrl + click me[/link]"
-        )
-        temp_avatar = i.artist_avatar
-        temp_avatar = (
-            f"[link={temp_avatar}]ctrl + click me[/link]"
-            if temp_avatar
-            else "There is no avatar"
-        )
-        console.print(
-            f"{ADDITIONALLY} Link to the artist's avatar - " f"{GREEN}{temp_avatar}\n"
-        )
-        if additional:
-            console.print(
-                f"{ADDITIONALLY} Popular tracks - {decor_join(i.popular_tracks)}"
-            )
-            console.print(
-                f"{ADDITIONALLY} Popular albums - {decor_join(i.popular_album)}"
-            )
-            console.print(
-                f"{ADDITIONALLY} Latest release - {GREEN}{i.latest_release}{GREENEND}"
-            )
-            temp_playlist = "Playlists" if len(i.playlists) > 1 else "Playlist"
-            console.print(f"{ADDITIONALLY} {temp_playlist} - {decor_join(i.playlists)}")
-            print()
+        print()
+        output_artist(nots, artistsreq, det, creat)
 
-    if additional and res_parse.type_link == "album":
+    if det and not artistsreq and stat.type_url == "album":
         console.print(
-            f"{ERRNO} Additional are not available, is it an album or a collection"
+            f"{ERRNO} Artist details are not available this is"
+            " a compilation"
+        )
+    if creat and not artistsreq and stat.type_url == "album":
+        console.print(
+            f"{ERRNO} Artist creativity are not available this is"
+            " a compilation"
         )
 
-    if simt and res_parse.type_link == "album":
-        console.print(
-            f"{ERRNO} Similar tracks are not available, "
-            "is it an album or a collection. Specify a track "
-            "from there, we will use it to find similar tracks."
-        )
 
-    if simt and res_parse.type_link != "album":
-        console.print(
-            f"{ADDITIONALLY} Similar tracks to the specified - "
-            f"{decor_join(res_parse.similar_tracks)}"
-        )
+# Main
 
 
 def main() -> None:
@@ -235,62 +226,26 @@ def main() -> None:
         help="Specify the link like this: -u link",
     )
     parses.add_argument(
-        "-st",
-        "--similar_tracks",
-        action="store_true",
-        help="Show similar tracks to the specified one",
-    )
-    parses.add_argument(
         "-c",
         "--cover",
         action="store_true",
-        help="Cover track or album or collection",
+        help="Cover track or album or compilation",
     )
     parses.add_argument(
-        "-adtl",
-        "--additional",
+        "-d",
+        "--details",
         action="store_true",
         help="Additional information from artists",
     )
+    parses.add_argument(
+        "-cr",
+        "--creativity",
+        action="store_true",
+        help="Show similar tracks to the specified one",
+    )
 
     args = parses.parse_args()
-    output_console(args.url, args.similar_tracks, args.cover, args.additional)
-    # stat = Static(args.url)
-    # artistreq = stat.artists(True)
-
-    # artist = []
-    # for i in artistreq:
-    #     # artist.append(i.name)
-    #     # artist.append(i.avatar)
-    #     # artist.append(i.about)
-    #     # artist.append()
-    #     # artist.append(i.latest_release)
-    #     # artist.append(i.playlists)
-    #     # artist.append(i.popular_albums)
-    #     # artist.append(i.popular_tracks)
-    #     # artist.append(i.similar_artists)
-    #     artist.append(i.listeners_month)
-    #     artist.append(i.likes_month)
-    # print(
-    #     stat.type_url, 'type\n',
-    #     stat.genre, 'genre\n',
-    #     stat.date, 'date\n',
-    #     stat.labels, 'labels\n',
-    #     stat.cover, 'cover\n',
-    #     # stat.album.name,
-    #     # stat.album.number_songs,
-    #     # stat.album.length,
-    #     stat.track.name, 'track name\n',
-    #     stat.track.length, 'track length\n',
-    #     stat.track.similar_tracks, 'track sim\n',
-    #     *artist
-    #     # s.name,
-    #     # s.avatar,
-    #     # s.about
-    #     # stat.artists[0].name,
-    #     # stat.artists[0].avatar,
-    #     # stat.artists[0].about
-    # )
+    output_console(args.url, args.details, args.creativity, args.cover)
 
 
 if __name__ == "__main__":
