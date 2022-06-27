@@ -1,5 +1,5 @@
 # Ym-Handler 😽
-Slow and small version of the wrapper for yandex music links
+yandex music url analyzer that outputs the information you need about your url
 
 ### Ym Structure v1.12
 [![Ym sctructure](https://github.com/uewquewqueqwue/Ym-Handler/blob/main/update_images/v1_12.png)](https://github.com/uewquewqueqwue/Ym-Handler/blob/main/update_images/v1_12.png)
