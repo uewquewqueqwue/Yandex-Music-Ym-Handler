@@ -101,7 +101,7 @@ def output_console(url: str, det: bool, creat: bool, cover: bool) -> None:
     print()
     console.print(
         Panel.fit(
-            f"{GRE}Ym URL Handler{GREEND} - "
+            f"{GRE}Ym Handler{GREEND} - "
             "by [bold red]uewquewqueqwue[/bold red]"
             f"(only regex \U0001F638 \U0001F63C) {GRE}< qdissh@gmail.com >{GREEND}",
             title="[bold yellow]Information[/bold yellow]",
