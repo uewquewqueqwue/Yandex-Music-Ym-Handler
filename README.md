@@ -1,6 +1,8 @@
 # Ym-Handler 😽
 yandex music url analyzer that outputs the information you need about your url
 
+[![CodeFactor](https://www.codefactor.io/repository/github/uewquewqueqwue/ym-handler/badge)](https://www.codefactor.io/repository/github/uewquewqueqwue/ym-handler)
+
 ### Ym Structure v1.12
 [![Ym sctructure](https://github.com/uewquewqueqwue/Ym-Handler/blob/main/update_images/v1_12.png)](https://github.com/uewquewqueqwue/Ym-Handler/blob/main/update_images/v1_12.png)
 
