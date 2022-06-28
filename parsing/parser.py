@@ -793,7 +793,7 @@ class Static:
         if not self.__braille_art:
             Request(url).parse_img()
             image = Image.open("image.jpg")
-            width = 100
+            width = 138
             wpercent = width / float(image.size[0])
             hsize = int((float(image.size[1]) * float(wpercent)))
             image = image.resize((width, hsize), Image.Resampling.LANCZOS)

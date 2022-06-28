@@ -21,7 +21,7 @@ GRE = "[bold green]"
 YEL = "[bold yellow]"
 YELEND = "[/bold yellow]"
 GREEND = "[/bold green]"
-VERSION = "v1.12"
+VERSION = "v1.12.2"
 console = Console(highlight=False)
 
 # Utilitarian functions

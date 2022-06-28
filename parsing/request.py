@@ -14,7 +14,7 @@ class Request:
 
     def parse_url(self) -> str | None:
         """return html page"""
-        print(self.__url)
+        # print(self.__url)
 
         return self.event_loop.run_until_complete(self.request())
 
