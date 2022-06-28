@@ -3,7 +3,7 @@ import os
 from datetime import timedelta
 
 from braillert.colors import RICH_COLORS, RICH_RESETTER
-from braillert.generator import generate_art
+from braillert.generator import Generator
 
 from re_parsing.request import Request
 
@@ -776,8 +776,9 @@ class Static:
 
         if not self.__braille_art:
             Request(url).parse_img()
-            cover = generate_art("image.jpg", RICH_COLORS, RICH_RESETTER)
+            cover = Generator("image.jpg", RICH_COLORS, RICH_RESETTER).generate_art()
             os.remove("image.jpg")
+            self.__braille_art = cover
             return cover
 
         return self.__braille_art
