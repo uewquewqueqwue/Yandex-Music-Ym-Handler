@@ -6,10 +6,11 @@ from braillert.colors import RICH_COLORS, RICH_RESETTER
 from braillert.generator import Generator
 from PIL import Image
 
-from re_parsing.request import Request
+from parsing.request import Request
 
 # FIX OUTPUT LIKES
 # FIX ALBUM_NAME
+# FIX LATEST RELEASE(MAIN)
 
 # Consts
 
@@ -418,7 +419,7 @@ class ArtistDetails(Artist):
         return self.__popular_album
 
     @property
-    def video_names(self) -> list | None:
+    def details_videos(self) -> list | None:
         """return a list of music video titles"""
 
         if not self.__video_names:
@@ -486,8 +487,6 @@ class ArtistCreativity(Artist):
             self.__parse_albums = Request(
                 YM_ARTIST + self.__artist_code + "/albums"
             ).parse_url()
-        else:
-            pass
 
         temp = re.findall(
             r"<span(?:\s+[^<]*)typo\stypo-h2_bold",
@@ -593,6 +592,7 @@ class Static:
 
     def __init__(self, url: str) -> None:
         self.__parse = self.analysis(url)
+        self.__artist_id = self.artist_id()
         self.__genre = None
         self.__date = None
         self.__labels = None
@@ -619,6 +619,7 @@ class Static:
             else:
                 self.type_url = "track"
                 self.__track_id = answer.get("track")
+                # self.__artist_id = self.artist_id()
             return Request(match.group()).parse_url()
 
         raise TypeError("Incorrect URL")
@@ -642,6 +643,29 @@ class Static:
 
         return True
 
+    def artist_id(self) -> list:
+        """_summary_
+
+        Returns:
+            _type_: _description_
+        """
+
+        temp_artist_link_block: str = re.search(
+            r"(?:<span\sclass=\"d-artists-many(?:.+?)|"
+            r"<div\sclass=\"page-album__artists-short(?:.+?))"
+            r"<div\sclass=\"d-album-summary",
+            self.__parse,
+            re.M,
+        ).group()
+
+        temp_artist_link_artists: list = re.findall(
+            r"/artist/(\d+)",
+            temp_artist_link_block,
+            re.M,
+        )
+
+        return temp_artist_link_artists
+
     @property
     def album(self) -> Album:
         """return Album class"""
@@ -664,23 +688,14 @@ class Static:
         Popular Albums, Playlists, The Name of music videos,
         Similar artists (8 pieces)."""
 
-        temp_artist_link_block: str = re.search(
-            r"d-artists\sd-artists__expanded\"(.+?[^>]*)</",
-            self.__parse,
-            re.M,
-        ).group()  # TODO
-
-        temp_artist_link_artists: list = re.findall(
-            r"/artist/(\d+)",
-            temp_artist_link_block,
-            re.M,
-        )
+        if not self.__artist_id:
+            self.artist_id()
 
         if self.check_compilation():
             return []
 
         artists_base = []
-        for i in temp_artist_link_artists:
+        for i in self.__artist_id:
             if details and creativity:
                 pass
             elif details:
@@ -777,8 +792,13 @@ class Static:
 
         if not self.__braille_art:
             Request(url).parse_img()
-            cover = Generator(Image.open("image.jpg"),
-                              RICH_COLORS, RICH_RESETTER).generate_art()
+            image = Image.open("image.jpg")
+            width = 100
+            wpercent = width / float(image.size[0])
+            hsize = int((float(image.size[1]) * float(wpercent)))
+            image = image.resize((width, hsize), Image.Resampling.LANCZOS)
+
+            cover = Generator(image, RICH_COLORS, RICH_RESETTER).generate_art()
             os.remove("image.jpg")
             self.__braille_art = cover
             return cover

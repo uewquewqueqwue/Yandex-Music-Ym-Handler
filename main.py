@@ -3,7 +3,7 @@ import argparse
 from rich.console import Console
 from rich.panel import Panel
 
-from re_parsing.parser import Static
+from parsing.parser import Static
 
 # Consts
 
@@ -37,6 +37,12 @@ def output_artist(nots: str, artists: list, det: bool, creat: bool) -> None:
     """transferred decor"""
 
     for i in artists:
+        print()
+        console.print(
+            f"[ [bold red]Ym STATIC {YEL}->{YELEND} Artist branch"
+            "[/bold red] ] [bold yellow]\u21AF[/bold yellow] Uploaded"
+        )
+        print()
         console.print(
             f"{STATIC} About {GRE}{i.name}{GREEND} - "
             f"{i.about if i.about else nots}",
@@ -63,7 +69,7 @@ def output_artist(nots: str, artists: list, det: bool, creat: bool) -> None:
             print()
             console.print(
                 f"{DETAILS} Latest release - "
-                f"{GRE}+{i.latest_release if i.latest_release else nots}"
+                + (GRE + i.latest_release if i.latest_release else nots)
             )
             console.print(
                 f"{DETAILS} Popular tracks - "
@@ -79,7 +85,7 @@ def output_artist(nots: str, artists: list, det: bool, creat: bool) -> None:
             )
             console.print(
                 f"{DETAILS} Videos - "
-                f"{decor_join(i.video_names) if i.video_names else nots}"
+                f"{decor_join(i.details_videos) if i.video_names else nots}"
             )
             console.print(
                 f"{DETAILS} Similar artists - "
@@ -204,13 +210,7 @@ def output_console(url: str, det: bool, creat: bool, cover: bool) -> None:
         f"{STATIC} Year of release - {GRE}{stat.date}{GREEND} | "
         f"Labels - {decor_join(stat.labels)}"
     )
-    print()
     if artistsreq:
-        console.print(
-            f"[ [bold red]Ym STATIC {YEL}->{YELEND} Artist branch"
-            "[/bold red] ] [bold yellow]\u21AF[/bold yellow] Uploaded"
-        )
-        print()
         output_artist(nots, artistsreq, det, creat)
 
     if det and not artistsreq and stat.type_url == "album":
