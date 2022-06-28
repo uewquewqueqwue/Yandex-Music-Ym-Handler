@@ -14,6 +14,7 @@ from re_parsing.parser import Static
 STATIC = "[ [bold red]Ym STATIC[/bold red] ] [bold yellow]\u21AF[/bold yellow]"
 INFO = "[ [bold red]Ym INFO[/bold red] ] [bold yellow]\u21AF[/bold yellow]"
 DETAILS = "[ [bold red]Ym DETAILS[/bold red] ] [bold yellow]\u21AF[/bold yellow]"
+CREAT = "[ [bold red]Ym CREATIVITY[/bold red] ] [bold yellow]\u21AF[/bold yellow]"
 PICTURE = "[ [bold red]Ym PICTURE[/bold red] ]"
 ERRNO = "[ [bold red]Ym ERRNO[/bold red] ] [bold yellow]\u21AF[/bold yellow]"
 GRE = "[bold green]"
@@ -85,7 +86,18 @@ def output_artist(nots: str, artists: list, det: bool, creat: bool) -> None:
                 f"{decor_join(i.similar_artists) if i.similar_artists else nots}"
             )
         if creat:
-            pass
+            print()
+            console.print(
+                f"[ [bold red]Ym STATIC {YEL}->{YELEND} Artist creativity branch"
+                "[/bold red] ] [bold yellow]\u21AF[/bold yellow] Uploaded"
+            )
+            print()
+            console.print(f"{CREAT} List of all albums - {decor_join(i.albums)}")
+            console.print(f"{CREAT} List of all tracks - {decor_join(i.tracks)}")
+            console.print(
+                f"{CREAT} List of all compilations - "
+                f"{decor_join(i.compilations) if i.compilations else nots}"
+            )
 
 
 def output_console(url: str, det: bool, creat: bool, cover: bool) -> None:
@@ -116,13 +128,21 @@ def output_console(url: str, det: bool, creat: bool, cover: bool) -> None:
         for i in artistsreq:
             console.print(
                 f"{INFO} The artist: {GRE}{i.name}{GREEND}, "
-                "his description, avatar were received"
+                f"his {decor_join(['description', 'avatar'])} were received!"
             )
             if det:
                 console.print(
-                    f"{INFO} The latest release, popular tracks, "
-                    "popular albums, videos on the page, "
-                    "similar artists have been received!"
+                    INFO
+                    + " "
+                    + decor_join(
+                        ["Latest release", "popular tracks", "popular albums", "videos"]
+                    )
+                    + " on the page,"
+                    f"{GRE}similar artists{GREEND} have been received!"
+                )
+            if creat:
+                console.print(
+                    f"{INFO} All tracks, albums, compilations have been received!"
                 )
     else:
         console.print(f"{INFO} The artists were not uploaded, this is a compilation")
@@ -155,8 +175,8 @@ def output_console(url: str, det: bool, creat: bool, cover: bool) -> None:
             f"{STATIC} Album cover - {GRE}[link={stat.cover}]ctrl + click me[/link]"
         )
         console.print(
-            f"{STATIC} Number of songs in the album - {GRE}"
-            f"{stat.album.number_songs}{GREEND} | the length of the entire "
+            f"{STATIC} Number of tracks in the album - {GRE}"
+            f"{stat.album.number_tracks}{GREEND} | the length of the entire "
             f"album - {GRE}{stat.album.length}{GREEND}"
         )
     else:
@@ -172,8 +192,8 @@ def output_console(url: str, det: bool, creat: bool, cover: bool) -> None:
         console.print(f"{STATIC} Track length - {GRE}{stat.track.length}")
         console.print(f"{STATIC} Track from the album - {GRE}{stat.track.album_name}")
         console.print(
-            f"{STATIC} Number of songs in the album - {GRE}"
-            + str(stat.album.number_songs)
+            f"{STATIC} Number of tracks in the album - {GRE}"
+            + str(stat.album.number_tracks)
         )
         console.print(
             f"{STATIC} The length of the entire album - {GRE}" + str(stat.album.length)
@@ -195,13 +215,11 @@ def output_console(url: str, det: bool, creat: bool, cover: bool) -> None:
 
     if det and not artistsreq and stat.type_url == "album":
         console.print(
-            f"{ERRNO} Artist details are not available this is"
-            " a compilation"
+            f"{ERRNO} Artist details are not available this is" " a compilation"
         )
     if creat and not artistsreq and stat.type_url == "album":
         console.print(
-            f"{ERRNO} Artist creativity are not available this is"
-            " a compilation"
+            f"{ERRNO} Artist creativity are not available this is" " a compilation"
         )
 
 

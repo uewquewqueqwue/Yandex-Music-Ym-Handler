@@ -7,6 +7,9 @@ from braillert.generator import generate_art
 
 from re_parsing.request import Request
 
+# FIX OUTPUT LIKES
+# FIX ALBUM_NAME
+
 # Consts
 
 YM = " https://music.yandex.com/"
@@ -103,8 +106,8 @@ class Album:
         )[0]
 
     @property
-    def number_songs(self) -> int:
-        """return number of songs in the album"""
+    def number_tracks(self) -> int:
+        """return number of tracks in the album"""
 
         return len(
             re.findall(
@@ -229,7 +232,8 @@ class Track:
         if not self.__album_name:
             return _fix_symbol(
                 re.findall(
-                    r"page-album__title\stypo-h1_big.+?link\">(.+?[^<]*)",
+                    r"page-album__title\s(?:typo-h1_big|typo-h1_small)"
+                    r"\">(?:.+?)>(.+?[^<]*)",
                     self.__parse,
                     re.M,
                 )
@@ -325,7 +329,9 @@ class Artist:
                         r"m.+?\"(?:Лай|Lik).+?total-count\">(\w+[^<]*)",
                         self.__parse,
                         re.M,
-                    ).groups()[0]
+                    )
+                    .groups()[0]
+                    .split()
                 )
             )
 
@@ -461,6 +467,123 @@ class ArtistDetails(Artist):
         return self.__similar_artists
 
 
+class ArtistCreativity(Artist):
+    """return class artistcreativity"""
+
+    def __init__(self, artist_code: str) -> None:
+        super().__init__(artist_code)
+        self.__artist_code = artist_code
+        self.__parse_albums = None
+        self.__albums = None
+        self.__tracks = None
+        self.__compilations = None
+
+    def check_compilations(self) -> bool:
+        """checks whether compilations are available on the site or not"""
+
+        if not self.__parse_albums:
+            self.__parse_albums = Request(
+                YM_ARTIST + self.__artist_code + "/albums"
+            ).parse_url()
+        else:
+            pass
+
+        temp = re.findall(
+            r"<span(?:\s+[^<]*)typo\stypo-h2_bold",
+            self.__parse_albums,
+            re.M,
+        )
+
+        return True if len(temp) > 1 else False
+
+    @property
+    def albums(self) -> list:
+        """return a list of all albums"""
+
+        if not self.__albums:
+
+            if self.check_compilations():
+                temp = re.search(
+                    r"<span(?:\s+[^<]*)typo\stypo-h2_bold(?:.+)<span(?:\s+[^<]*)typo\stypo-h2_bold",
+                    self.__parse_albums,
+                    re.M,
+                ).group()
+
+                return _fix_symbol(
+                    re.findall(
+                        r"class=\"album__title\sdeco-typo\stypo-main\"\stitle=\"(.+?[^\"]*)",
+                        temp,
+                        re.M,
+                    )
+                )
+
+            temp = re.search(
+                r"<span(?:\s+[^<]*)typo\stypo-h2_bold(?:.+)class=\"sidebar__place"
+                r"holder\ssidebar__sticky\"",
+                self.__parse_albums,
+                re.M,
+            ).group()
+
+            return _fix_symbol(
+                re.findall(
+                    r"class=\"album__title\sdeco-typo\stypo-main\"\stitle=\"(.+?[^\"]*)",
+                    temp,
+                    re.M,
+                )
+            )
+
+        return self.__albums
+
+    @property
+    def tracks(self) -> list:
+        """return a list of all tracks"""
+
+        if not self.__tracks:
+
+            __parse = Request(YM_ARTIST + self.__artist_code + "/tracks").parse_url()
+
+            temp = re.search(
+                r"<span(?:\s+[^<]*)typo\stypo-h2_bold(?:.+)class=\"sidebar__place"
+                r"holder\ssidebar__sticky\"",
+                __parse,
+                re.M,
+            ).group()
+
+            return _fix_symbol(
+                re.findall(
+                    r"class=\"d-track__name\"\stitle=\"(.+?[^\"]*)",
+                    temp,
+                    re.M,
+                )
+            )
+
+        return self.__tracks
+
+    @property
+    def compilations(self) -> list | None:
+        """return a list or None of all compilations"""
+
+        if not self.__compilations:
+
+            if self.check_compilations():
+                temp = re.search(
+                    r"<span(?:\s+[^<]*)typo\stypo-h2_bold\">(?:Com|Сбо)(?:.+)class=\"sidebar__place"
+                    r"holder\ssidebar__sticky\"",
+                    self.__parse_albums,
+                    re.M,
+                ).group()
+
+                return _fix_symbol(
+                    re.findall(
+                        r"class=\"album__title\sdeco-typo\stypo-main\"\stitle=\"(.+?[^\"]*)",
+                        temp,
+                        re.M,
+                    )
+                )
+
+        return self.__compilations
+
+
 # Static class
 
 
@@ -499,7 +622,7 @@ class Static:
 
         raise TypeError("Incorrect URL")
 
-    def check_collection(self) -> bool:
+    def check_compilation(self) -> bool:
         """checks whether this album is a compilation"""
 
         temp = re.findall(
@@ -544,7 +667,7 @@ class Static:
             r"d-artists\sd-artists__expanded\"(.+?[^>]*)</",
             self.__parse,
             re.M,
-        ).group()
+        ).group()  # TODO
 
         temp_artist_link_artists: list = re.findall(
             r"/artist/(\d+)",
@@ -552,7 +675,7 @@ class Static:
             re.M,
         )
 
-        if self.check_collection():
+        if self.check_compilation():
             return []
 
         artists_base = []
@@ -562,7 +685,7 @@ class Static:
             elif details:
                 artists_base.append(ArtistDetails(i))
             elif creativity:
-                pass
+                artists_base.append(ArtistCreativity(i))
             else:
                 artists_base.append(Artist(i))
 

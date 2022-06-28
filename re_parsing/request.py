@@ -9,11 +9,12 @@ class Request:
     HEADERS: dict = {"User-Agent": "Magic Browser"}
 
     def __init__(self, url: str) -> None:
-        self.url: str = url
+        self.__url = url
         self.event_loop = asyncio.get_event_loop()
 
     def parse_url(self) -> str | None:
         """return html page"""
+        print(self.__url)
 
         return self.event_loop.run_until_complete(self.request())
 
@@ -26,7 +27,7 @@ class Request:
         """request wrapper"""
 
         async with aiohttp.ClientSession(headers=self.HEADERS) as session:
-            async with session.get(self.url) as response:
+            async with session.get(self.__url) as response:
                 if response.status == 200:
                     return await response.text()
 
@@ -39,7 +40,7 @@ class Request:
         """return the downloaded image"""
 
         async with aiohttp.ClientSession() as session:
-            async with session.get(self.url) as response:
+            async with session.get(self.__url) as response:
                 if response.status == 200:
                     response_bytes = await response.read()
                     with open("image.jpg", "wb") as file:
