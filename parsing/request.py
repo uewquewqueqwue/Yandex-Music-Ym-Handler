@@ -28,6 +28,7 @@ class Request:
 
         async with aiohttp.ClientSession(headers=self.HEADERS) as session:
             async with session.get(self.__url) as response:
+                # print(response.status)
                 if response.status == 200:
                     return await response.text()
 
@@ -35,6 +36,8 @@ class Request:
                     raise TypeError(
                         "Track or album not found, check your link for correctness"
                     )
+                if response.status == 404:
+                    return None
 
     async def download_image(self) -> None:
         """return the downloaded image"""

@@ -1,5 +1,5 @@
-import re
 import os
+import re
 from datetime import timedelta
 
 from braillert.colors import RICH_COLORS, RICH_RESETTER
@@ -145,7 +145,7 @@ class Track:
         self.__track_id = track_id
         self.__name = None
         self.__length = None
-        self.__similar_tracks = None
+        self.__similar = None
         self.__album_name = None
 
     @classmethod
@@ -201,10 +201,10 @@ class Track:
         return self.__length
 
     @property
-    def similar_tracks(self) -> list:
+    def similar(self) -> list:
         """return similar tracks"""
 
-        if not self.__similar_tracks:
+        if not self.__similar:
             temp = re.search(
                 r"sidebar__section-title\stypo-caps\sdeco-typo-seco"
                 r"ndary.+?class=\"footer\"",
@@ -225,7 +225,7 @@ class Track:
                 )
             )
 
-        return self.__similar_tracks
+        return self.__similar
 
     @property
     def album_name(self) -> str:
@@ -247,9 +247,8 @@ class Track:
 class Artist:
     """return Artist class"""
 
-    def __init__(self, artist_code: str) -> None:
-        self.__parse = Request(YM_ARTIST + artist_code + "/info").parse_url()
-        self.url = YM_ARTIST + artist_code
+    def __init__(self, artist_id: str) -> None:
+        self.__parse = Request(YM_ARTIST + artist_id + "/info").parse_url()
         self.__name = None
         self.__avatar = None
         self.__about = None
@@ -261,8 +260,10 @@ class Artist:
             raise AttributeError(
                 "These attributes are not in Artist, use ArtistDetails"
             )
-        # if item in ArtistDetails.__dict__:
-        #     raise AttributeError("These attributes are not in Artist, use ArtistAdd")
+        if item in ArtistCreativity.__dict__:
+            raise AttributeError(
+                "These attributes are not in Artist, use ArtistCreativity"
+            )
 
     @property
     def name(self) -> str:
@@ -363,15 +364,22 @@ class Artist:
 class ArtistDetails(Artist):
     """a class for getting great details about an artist"""
 
-    def __init__(self, artist_code: str) -> str:
-        super().__init__(artist_code)
-        self.__parse = Request(YM_ARTIST + artist_code).parse_url()
+    def __init__(self, artist_id: str) -> str:
+        super().__init__(artist_id)
+        self.__parse = Request(YM_ARTIST + artist_id).parse_url()
         self.__popular_tracks = None
         self.__last_release = None
-        self.__popular_album = None
+        self.__popular_albums = None
         self.__playlists = None
-        self.__video_names = None
-        self.__similar_artists = None
+        self.__videos = None
+        self.__similar = None
+
+    def __getattr__(self, item):
+        if item in ArtistCreativity.__dict__:
+            raise AttributeError(
+                "These attributes are not in ArtistDetails, "
+                "use ArtistCreativity"
+            )
 
     @property
     def latest_release(self) -> str | None:
@@ -407,7 +415,7 @@ class ArtistDetails(Artist):
     def popular_albums(self) -> list:
         """return a list of popular artsit albums"""
 
-        if not self.__popular_album:
+        if not self.__popular_albums:
             return _fix_symbol(
                 re.findall(
                     r"album\salbum_selectable.+?d-link\sdeco-link\salbum__caption\">(.+?[^<]*)",
@@ -416,20 +424,20 @@ class ArtistDetails(Artist):
                 )
             )
 
-        return self.__popular_album
+        return self.__popular_albums
 
     @property
-    def details_videos(self) -> list | None:
+    def videos(self) -> list | None:
         """return a list of music video titles"""
 
-        if not self.__video_names:
+        if not self.__videos:
             return re.findall(
                 r"video-list__item\".+?d-link\sdeco-link\">(.+?[^<]*)",
                 self.__parse,
                 re.M,
             )
 
-        return self.__video_names
+        return self.__videos
 
     @property
     def playlists(self) -> list:
@@ -447,10 +455,10 @@ class ArtistDetails(Artist):
         return self.__playlists
 
     @property
-    def similar_artists(self) -> list | None:
-        """return similar artists"""
+    def similar(self) -> list | None:
+        """return similar artists 8"""
 
-        if not self.__similar_artists:
+        if not self.__similar:
             temp = re.findall(
                 r"data-card=\"similar_artists\".+?sidebar__placeholder",
                 self.__parse,
@@ -466,7 +474,7 @@ class ArtistDetails(Artist):
                     )
                 )
 
-        return self.__similar_artists
+        return self.__similar
 
 
 class ArtistCreativity(Artist):
@@ -479,6 +487,15 @@ class ArtistCreativity(Artist):
         self.__albums = None
         self.__tracks = None
         self.__compilations = None
+        self.__videos = None
+        self.__similar = None
+
+    def __getattr__(self, item):
+        if item in ArtistDetails.__dict__:
+            raise AttributeError(
+                "These attributes are not in ArtistCreativity, "
+                "use ArtistDetails"
+            )
 
     def check_compilations(self) -> bool:
         """checks whether compilations are available on the site or not"""
@@ -583,6 +600,45 @@ class ArtistCreativity(Artist):
 
         return self.__compilations
 
+    @property
+    def similar(self) -> list | None:
+        """return a list of all similar artists"""
+
+        if not self.__similar:
+
+            temp = Request(YM_ARTIST + self.__artist_code + "/similar").parse_url()
+
+            self.__similar = _fix_symbol(
+                re.findall(
+                    r"<a\shref=\"/artist/\d+\"\sclass=\"d-link\sdec"
+                    r"o-link\"\stitle=\"(.+?[^\"]*)",
+                    temp,
+                    re.M,
+                )
+            )
+
+        return self.__similar
+
+    @property
+    def videos(self) -> list | None:
+        """return a list of all videos"""
+
+        if not self.__videos:
+            self.__videos = Request(
+                YM_ARTIST + self.__artist_code + "/videos"
+            ).parse_url()
+
+            if self.__videos:
+                self.__videos = _fix_symbol(
+                    re.findall(
+                        r"<div\sclass=\"video-list__item-title\">(?:.+?)>(.+?[^<]*)",
+                        self.__videos,
+                        re.M,
+                    )
+                )
+
+        return self.__videos
+
 
 # Static class
 
@@ -619,7 +675,6 @@ class Static:
             else:
                 self.type_url = "track"
                 self.__track_id = answer.get("track")
-                # self.__artist_id = self.artist_id()
             return Request(match.group()).parse_url()
 
         raise TypeError("Incorrect URL")
@@ -650,6 +705,9 @@ class Static:
             _type_: _description_
         """
 
+        if self.check_compilation():
+            return []
+
         temp_artist_link_block: str = re.search(
             r"(?:<span\sclass=\"d-artists-many(?:.+?)|"
             r"<div\sclass=\"page-album__artists-short(?:.+?))"
@@ -678,34 +736,49 @@ class Static:
 
         return Track(self.__parse, self.__track_id)
 
-    def artists(
-        self, details: bool = False, creativity: bool = False
-    ) -> list[Artist | ArtistDetails]:
+    @property
+    def artists(self) -> list[Artist]:
         """return the Name, Avatar, Description of the artist
         with a normal request
 
         return the Name, Avatar, Description, Latest Release, Popular Tracks,
         Popular Albums, Playlists, The Name of music videos,
-        Similar artists (8 pieces)."""
+        Similar artists (8 pieces)"""
 
-        if not self.__artist_id:
-            self.artist_id()
-
-        if self.check_compilation():
-            return []
-
-        artists_base = []
-        for i in self.__artist_id:
-            if details and creativity:
-                pass
-            elif details:
-                artists_base.append(ArtistDetails(i))
-            elif creativity:
-                artists_base.append(ArtistCreativity(i))
-            else:
+        if self.__artist_id:
+            artists_base = []
+            for i in self.__artist_id:
                 artists_base.append(Artist(i))
 
-        return artists_base
+            return artists_base
+
+        return self.__artist_id
+
+    @property
+    def artists_details(self) -> list[ArtistDetails]:
+        """_summ"""
+
+        if self.__artist_id:
+            artists_details = []
+            for i in self.__artist_id:
+                artists_details.append(ArtistDetails(i))
+
+            return artists_details
+
+        return self.__artist_id
+
+    @property
+    def artists_creativity(self) -> list[ArtistCreativity]:
+        """_summ"""
+
+        if self.__artist_id:
+            artist_creativity = []
+            for i in self.__artist_id:
+                artist_creativity.append(ArtistCreativity(i))
+
+            return artist_creativity
+
+        return self.__artist_id
 
     @property
     def genre(self) -> tuple | None:
