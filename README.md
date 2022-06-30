@@ -7,6 +7,6 @@ yandex music url analyzer that outputs the information you need about your url
 [![Ym sctructure](https://github.com/uewquewqueqwue/Ym-Handler/blob/main/update_images/v1_13.png)](https://github.com/uewquewqueqwue/Ym-Handler/blob/main/update_images/v1_13.png)
 
 ### Ym Structure v1.12.2
-[![Ym sctructure](https://github.com/uewquewqueqwue/Ym-Handler/blob/main/update_images/v1_13-pre.png)](https://github.com/uewquewqueqwue/Ym-Handler/blob/main/update_images/v1_13-pre.png)
+[![Ym sctructure](https://github.com/uewquewqueqwue/Ym-Handler/blob/main/update_images/v1_12_2.png)](https://github.com/uewquewqueqwue/Ym-Handler/blob/main/update_images/v1_12_2.png)
 
 Ym Structure [v1.12](https://github.com/uewquewqueqwue/Ym-Handler/blob/main/update_images/v1_12.png), [v1.11](https://github.com/uewquewqueqwue/Ym-Handler/blob/main/update_images/v1_11.png), [v1.7](https://github.com/uewquewqueqwue/Ym-Handler/blob/main/update_images/v1_7.png)

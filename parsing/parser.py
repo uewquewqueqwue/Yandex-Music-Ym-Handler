@@ -169,7 +169,7 @@ class Track:
         """return track name"""
 
         if not self.__name:
-            return _fix_symbol(
+            self.__name = _fix_symbol(
                 re.search(
                     r"sidebar__title\ssidebar-track__title\sdeco-type\sty"
                     r"po-h2\".+?d-link\sdeco-link\">(.+?[^<]*)",
@@ -185,7 +185,7 @@ class Track:
         """return the length of the track"""
 
         if not self.__length:
-            return _convert_to_timedelta(
+            self.__length = _convert_to_timedelta(
                 [
                     re.search(
                         (
@@ -212,7 +212,7 @@ class Track:
                 re.M,
             )
 
-            return _fix_symbol(
+            self.__similar = _fix_symbol(
                 list(
                     map(
                         lambda x: x.strip(),
@@ -232,7 +232,7 @@ class Track:
         """return album name"""
 
         if not self.__album_name:
-            return _fix_symbol(
+            self.__album_name = _fix_symbol(
                 re.findall(
                     r"page-album__title\s(?:typo-h1_big|typo-h1_small)"
                     r"\">(?:.+?)>(.+?[^<]*)",
@@ -249,6 +249,7 @@ class Artist:
 
     def __init__(self, artist_id: str) -> None:
         self.__parse = Request(YM_ARTIST + artist_id + "/info").parse_url()
+        self.url = YM_ARTIST + artist_id
         self.__name = None
         self.__avatar = None
         self.__about = None
@@ -270,7 +271,7 @@ class Artist:
         """return artist name"""
 
         if not self.__name:
-            return _fix_symbol(
+            self.__name = _fix_symbol(
                 re.search(
                     r"<h1(?:\s+[^>]*)>(.+?[^<]*)",
                     self.__parse,
@@ -292,7 +293,7 @@ class Artist:
             )
 
             if temp_artist_about:
-                return _fix_symbol(temp_artist_about)[0]
+                self.__about = _fix_symbol(temp_artist_about)[0]
 
         return self.__about
 
@@ -312,11 +313,11 @@ class Artist:
 
             if re.search(r"\bw=\b", temp_artist_avatar):
                 temp_artist_avatar_end = "".join(temp_artist_avatar.split(";"))
-                return "https:" + temp_artist_avatar_end.replace(
+                self.__avatar = "https:" + temp_artist_avatar_end.replace(
                     "&#47", "\u002F"
                 ).replace("&#38", "\u0026")
 
-            return _full_size_image(temp_artist_avatar)
+            self.__avatar = temp_artist_avatar
 
         return self.__avatar
 
@@ -325,7 +326,7 @@ class Artist:
         """returns the number of likes per month"""
 
         if not self.__likes_month:
-            return int(
+            self.__likes_month = int(
                 "".join(
                     re.search(
                         r"page-section__title\stypo typo-mediu"
@@ -345,7 +346,7 @@ class Artist:
         """returns the number of listeners per month"""
 
         if not self.__listeners_month:
-            return int(
+            self.__listeners_month = int(
                 "".join(
                     re.search(
                         r"page-section__title\stypo typo-mediu"
@@ -386,37 +387,23 @@ class ArtistDetails(Artist):
         """return the artist's latest release"""
 
         if not self.__last_release:
-            temp: re.Match = re.search(
+            temp = re.search(
                 r"page-artist__latest-album.+?album__caption\">(.+?[^<]*)",
                 self.__parse,
                 re.M,
             )
 
             if temp:
-                return _fix_symbol(temp.groups()[0])[0]
+                self.__last_release = _fix_symbol(temp.groups()[0])[0]
 
         return self.__last_release
-
-    @property
-    def popular_tracks(self) -> list:
-        """return a list of the artist's popular tracks"""
-
-        if not self.__popular_tracks:
-            temp: list = re.findall(
-                r"d-track__title\sdeco-link\sdeco-link_stronger\">(.+?[^<]*)",
-                self.__parse,
-                re.M,
-            )
-            return _fix_symbol(temp)
-
-        return self.__popular_tracks
 
     @property
     def popular_albums(self) -> list:
         """return a list of popular artsit albums"""
 
         if not self.__popular_albums:
-            return _fix_symbol(
+            self.__popular_albums = _fix_symbol(
                 re.findall(
                     r"album\salbum_selectable.+?d-link\sdeco-link\salbum__caption\">(.+?[^<]*)",
                     self.__parse,
@@ -427,11 +414,24 @@ class ArtistDetails(Artist):
         return self.__popular_albums
 
     @property
+    def popular_tracks(self) -> list:
+        """return a list of the artist's popular tracks"""
+
+        if not self.__popular_tracks:
+            self.__popular_tracks = _fix_symbol(re.findall(
+                r"d-track__title\sdeco-link\sdeco-link_stronger\">(.+?[^<]*)",
+                self.__parse,
+                re.M,)
+            )
+
+        return self.__popular_tracks
+
+    @property
     def videos(self) -> list | None:
         """return a list of music video titles"""
 
         if not self.__videos:
-            return re.findall(
+            self.__videos = re.findall(
                 r"video-list__item\".+?d-link\sdeco-link\">(.+?[^<]*)",
                 self.__parse,
                 re.M,
@@ -444,7 +444,7 @@ class ArtistDetails(Artist):
         """return playlists associated with the artist"""
 
         if not self.__playlists:
-            return _fix_symbol(
+            self.__playlists = _fix_symbol(
                 re.findall(
                     r"d-link\sdeco-link\splaylist__title-link\">(.+?[^<]*)",
                     self.__parse,
@@ -466,7 +466,7 @@ class ArtistDetails(Artist):
             )[0]
 
             if temp:
-                return _fix_symbol(
+                self.__similar = _fix_symbol(
                     re.findall(
                         r"artist__name.+?title=\"(.+?[^\"]*)",
                         temp,
@@ -526,7 +526,7 @@ class ArtistCreativity(Artist):
                     re.M,
                 ).group()
 
-                return _fix_symbol(
+                self.__albums = _fix_symbol(
                     re.findall(
                         r"class=\"album__title\sdeco-typo\stypo-main\"\stitle=\"(.+?[^\"]*)",
                         temp,
@@ -541,7 +541,7 @@ class ArtistCreativity(Artist):
                 re.M,
             ).group()
 
-            return _fix_symbol(
+            self.__albums = _fix_symbol(
                 re.findall(
                     r"class=\"album__title\sdeco-typo\stypo-main\"\stitle=\"(.+?[^\"]*)",
                     temp,
@@ -566,7 +566,7 @@ class ArtistCreativity(Artist):
                 re.M,
             ).group()
 
-            return _fix_symbol(
+            self.__tracks = _fix_symbol(
                 re.findall(
                     r"class=\"d-track__name\"\stitle=\"(.+?[^\"]*)",
                     temp,
@@ -590,7 +590,7 @@ class ArtistCreativity(Artist):
                     re.M,
                 ).group()
 
-                return _fix_symbol(
+                self.__compilations = _fix_symbol(
                     re.findall(
                         r"class=\"album__title\sdeco-typo\stypo-main\"\stitle=\"(.+?[^\"]*)",
                         temp,
@@ -795,7 +795,7 @@ class Static:
             )
 
             if temp:
-                return temp.groups()
+                self.__genre = temp.groups()
 
         return self.__genre
 
@@ -811,7 +811,7 @@ class Static:
             )
 
             if temp:
-                return temp.groups()[0]
+                self.__date = temp.groups()[0]
 
         return self.__date
 
@@ -829,7 +829,7 @@ class Static:
             )
 
             if temp:
-                return temp
+                self.__labels = temp
 
         return self.__labels
 
@@ -847,7 +847,7 @@ class Static:
             if check_cover:
                 return self.__cover
 
-            return _full_size_image(
+            self.__cover = _full_size_image(
                 re.search(
                     (
                         r"<img(?:\s+[^>]*)class=\"entity-cover__image\sde"
@@ -874,6 +874,5 @@ class Static:
             cover = Generator(image, RICH_COLORS, RICH_RESETTER).generate_art()
             os.remove("image.jpg")
             self.__braille_art = cover
-            return cover
 
         return self.__braille_art

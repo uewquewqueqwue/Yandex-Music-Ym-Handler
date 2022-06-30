@@ -21,7 +21,7 @@ GRE = "[bold green]"
 YEL = "[bold yellow]"
 YELEND = "[/bold yellow]"
 GREEND = "[/bold green]"
-VERSION = "v1.12.2"
+VERSION = "v1.13.1"
 console = Console(highlight=False)
 
 
@@ -39,7 +39,13 @@ def output_artist(
 ) -> None:
     """transferred decor"""
 
-    for i in artists:
+    if det:
+        a_det = stat.artists_details
+
+    if creat:
+        a_creat = stat.artists_creativity
+
+    for numb, i in enumerate(artists):
         print()
         console.print(
             f"[ [bold red]Ym STATIC {YEL}->{YELEND} Artist branch"
@@ -64,61 +70,57 @@ def output_artist(
             f"| Likes per month - {GRE}{i.likes_month}"
         )
         if det:
-            artists_det = stat.artists_details
-            for i in artists_det:
-                print()
-                console.print(
-                    f"[ [bold red]Ym STATIC {YEL}->{YELEND} Artist details branch"
-                    "[/bold red] ] [bold yellow]\u21AF[/bold yellow] Uploaded"
-                )
-                print()
-                console.print(
-                    f"{DETAILS} Latest release - "
-                    + (GRE + i.latest_release if i.latest_release else nots)
-                )
-                console.print(
-                    f"{DETAILS} Popular tracks - "
-                    + (decor_join(i.popular_tracks) if i.popular_tracks else nots)
-                )
-                console.print(
-                    f"{DETAILS} Popular albums - "
-                    + (decor_join(i.popular_albums) if i.popular_albums else nots)
-                )
-                console.print(
-                    f"{DETAILS} Playlists - "
-                    + (decor_join(i.playlists) if i.playlists else nots)
-                )
-                console.print(
-                    f"{DETAILS} Videos - "
-                    + (decor_join(i.videos) if i.videos else nots)
-                )
-                console.print(
-                    f"{DETAILS} Similar artists - "
-                    + (decor_join(i.similar) if i.similar else nots)
-                )
+            print()
+            console.print(
+                f"[ [bold red]Ym STATIC {YEL}->{YELEND} Artist details branch"
+                "[/bold red] ] [bold yellow]\u21AF[/bold yellow] Uploaded"
+            )
+            print()
+            console.print(
+                f"{DETAILS} Latest release - "
+                + (GRE + a_det[numb].latest_release if a_det[numb].latest_release else nots)
+            )
+            console.print(
+                f"{DETAILS} Popular tracks - "
+                + (decor_join(a_det[numb].popular_tracks) if a_det[numb].popular_tracks else nots)
+            )
+            console.print(
+                f"{DETAILS} Popular albums - "
+                + (decor_join(a_det[numb].popular_albums) if a_det[numb].popular_albums else nots)
+            )
+            console.print(
+                f"{DETAILS} Playlists - "
+                + (decor_join(a_det[numb].playlists) if a_det[numb].playlists else nots)
+            )
+            console.print(
+                f"{DETAILS} Videos - "
+                + (decor_join(a_det[numb].videos) if a_det[numb].videos else nots)
+            )
+            console.print(
+                f"{DETAILS} Similar artists - "
+                + (decor_join(a_det[numb].similar) if a_det[numb].similar else nots)
+            )
         if creat:
-            artists_creat = stat.artists_creativity
-            for i in artists_creat:
-                print()
-                console.print(
-                    f"[ [bold red]Ym STATIC {YEL}->{YELEND} Artist creativity branch"
-                    "[/bold red] ] [bold yellow]\u21AF[/bold yellow] Uploaded"
-                )
-                print()
-                console.print(f"{CREAT} List of all albums - {decor_join(i.albums)}")
-                console.print(f"{CREAT} List of all tracks - {decor_join(i.tracks)}")
-                console.print(
-                    f"{CREAT} List of all compilations - "
-                    + (decor_join(i.compilations) if i.compilations else nots)
-                )
-                console.print(
-                    f"{CREAT} List of all videos - "
-                    + (decor_join(i.videos) if i.videos else nots)
-                )
-                console.print(
-                    f"{CREAT} List of all similar artists - "
-                    + (decor_join(i.similar) if i.similar else nots)
-                )
+            print()
+            console.print(
+                f"[ [bold red]Ym STATIC {YEL}->{YELEND} Artist creativity branch"
+                "[/bold red] ] [bold yellow]\u21AF[/bold yellow] Uploaded"
+            )
+            print()
+            console.print(f"{CREAT} List of all albums - {decor_join(a_creat[numb].albums)}")
+            console.print(f"{CREAT} List of all tracks - {decor_join(a_creat[numb].tracks)}")
+            console.print(
+                f"{CREAT} List of all compilations - "
+                + (decor_join(a_creat[numb].compilations) if a_creat[numb].compilations else nots)
+            )
+            console.print(
+                f"{CREAT} List of all videos - "
+                + (decor_join(a_creat[numb].videos) if a_creat[numb].videos else nots)
+            )
+            console.print(
+                f"{CREAT} List of all similar artists - "
+                + (decor_join(a_creat[numb].similar) if a_creat[numb].similar else nots)
+            )
 
 
 def output_console(url: str, det: bool, creat: bool, cover: bool) -> None:
@@ -163,7 +165,8 @@ def output_console(url: str, det: bool, creat: bool, cover: bool) -> None:
                 )
             if creat:
                 console.print(
-                    f"{INFO} All tracks, albums, compilations have been received!"
+                    f"{INFO} All {decor_join(['tracks', 'albums', 'compilations'])}"
+                    " have been received!"
                 )
     else:
         console.print(f"{INFO} The artists were not uploaded, this is a compilation")
