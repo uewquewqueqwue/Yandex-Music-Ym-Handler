@@ -14,7 +14,7 @@ class Request:
 
     def parse_url(self) -> str | None:
         """return html page"""
-        # print(self.__url)
+        print(self.__url)
 
         return self.event_loop.run_until_complete(self.request())
 
@@ -28,7 +28,7 @@ class Request:
 
         async with aiohttp.ClientSession(headers=self.HEADERS) as session:
             async with session.get(self.__url) as response:
-                # print(response.status)
+                print(response.status)
                 if response.status == 200:
                     return await response.text()
 
@@ -37,7 +37,7 @@ class Request:
                         "Track or album not found, check your link for correctness"
                     )
                 if response.status == 404:
-                    return None
+                    raise TypeError("Incorrect URL")
 
     async def download_image(self) -> None:
         """return the downloaded image"""
