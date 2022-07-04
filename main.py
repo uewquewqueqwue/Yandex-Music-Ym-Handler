@@ -21,7 +21,7 @@ GRE = "[bold green]"
 YEL = "[bold yellow]"
 YELEND = "[/bold yellow]"
 GREEND = "[/bold green]"
-VERSION = "v1.14"
+VERSION = "v1.14.1"
 console = Console(highlight=False)
 
 
@@ -76,7 +76,12 @@ def output_artist(nots: str, artists: list, det: bool, creat: bool) -> None:
         )
         console.print(
             f"{STATIC} The number of people who have added this art"
-            f"ist to their collection - {GRE}" + str(i.artists.added_to_themselves)
+            f"ist to their collection - {GRE}"
+            + (
+                str(i.artists.added_to_themselves)
+                if i.artists.added_to_themselves
+                else nots
+            )
         )
         if det:
             print()
@@ -86,9 +91,9 @@ def output_artist(nots: str, artists: list, det: bool, creat: bool) -> None:
             )
             print()
             console.print(
-                f"{DETAILS} Latest release - "
+                f"{DETAILS} Latest release - {GRE}"
                 + (
-                    GRE + i.artists_details.latest_release
+                    i.artists_details.latest_release
                     if i.artists_details.latest_release
                     else nots
                 )
@@ -235,6 +240,11 @@ def output_console(url: str, det: bool, creat: bool, cover: bool) -> None:
                 title=PICTURE,
                 subtitle="Built with \U0001F49C by ov3rwrite",
             )
+            if stat.cover
+            else Panel.fit(
+                "Oops... The track, album or compilation does not have a cover",
+                title=PICTURE,
+            )
         )
         print()
     if stat.type_url == "album":
@@ -245,7 +255,8 @@ def output_console(url: str, det: bool, creat: bool, cover: bool) -> None:
         print()
         console.print(f"{STATIC} Album title - {GRE}{stat.album.name}")
         console.print(
-            f"{STATIC} Album cover - {GRE}[link={stat.cover}]ctrl + click me[/link]"
+            f"{STATIC} Album cover - {GRE}"
+            + (f"[link={stat.cover}]ctrl + click me[/link]" if stat.cover else nots)
         )
         console.print(
             f"{STATIC} Number of tracks in the album - {GRE}"
@@ -260,7 +271,8 @@ def output_console(url: str, det: bool, creat: bool, cover: bool) -> None:
         print()
         console.print(f"{STATIC} Track title - {GRE}{stat.track.name}")
         console.print(
-            f"{STATIC} Track cover - {GRE}[link={stat.cover}]ctrl + click me[/link]"
+            f"{STATIC} Track cover - {GRE}"
+            + (f"[link={stat.cover}]ctrl + click me[/link]" if stat.cover else nots)
         )
         console.print(f"{STATIC} Track length - {GRE}{stat.track.length}")
         console.print(f"{STATIC} Track from the album - {GRE}{stat.track.album_name}")
@@ -273,10 +285,12 @@ def output_console(url: str, det: bool, creat: bool, cover: bool) -> None:
         )
 
     console.print(f"{STATIC} {temp_artists} - {temp_coll}")
-    console.print(f"{STATIC} Genres - {decor_join(stat.genre)}")
+    console.print(
+        f"{STATIC} Genres - " + (decor_join(stat.genre) if stat.genre else nots)
+    )
     console.print(
         f"{STATIC} Year of release - {GRE}{stat.date}{GREEND} | "
-        f"Labels - {decor_join(stat.labels)}"
+        f"Labels - " + (decor_join(stat.labels) if stat.labels else nots)
     )
     if artists_stack:
         output_artist(nots, artists_stack, det, creat)
@@ -331,7 +345,12 @@ def main() -> None:
     )
 
     args = parses.parse_args()
-    output_console(args.url, args.details, args.creativity, args.cover)
+    output_console(
+        args.url,
+        args.details,
+        args.creativity,
+        args.cover,
+    )
 
 
 if __name__ == "__main__":

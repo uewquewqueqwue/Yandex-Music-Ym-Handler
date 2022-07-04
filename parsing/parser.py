@@ -149,13 +149,18 @@ class Track:
     def check_id(cls, parse: str) -> str:
         """checking correct id"""
 
-        check_correct = re.search(r"<title>(\w+)", parse).groups()
-        check_correct_ = re.search(
-            r"class=\"d-link\sdeco-link\".+?>(\w+)", parse
-        ).groups()
+        check_correct = re.search(
+            r"<title>((?:[()?&*^%$#!@~_]*)\w+|\w+)", parse
+        ).groups()  # check title page of error
+
+        # check_correct_ = re.search(
+        #     r"class=\"d-link\sdeco-link\".+?>(\w+)", parse
+        # ).groups()
+
         if (
-            check_correct[0].lower() not in ["яндекс", "yandex"]
-            and check_correct[0] != check_correct_[0]
+            check_correct[0].lower()
+            not in ["яндекс", "yandex"]
+            # and check_correct[0] != check_correct_[0]
         ):
             return parse
 
@@ -390,22 +395,19 @@ class Artist:
 
     @property
     def added_to_themselves(self) -> int:
-        """The number of people who have added 
+        """The number of people who have added
         this artist to their collection"""
 
         if not self.__add_to_the:
-            self.__add_to_the = int(
-                "".join(
-                    re.search(
-                        r"<button(?:\s+[^<]*)title=\"(?:Add|Сде)(?:.+?)<span\scla"
-                        r"ss=\"d-button__label\">(.+?[^<]*)",
-                        self.__parse,
-                        re.M,
-                    )
-                    .groups()[0]
-                    .split()
-                )
+            temp = re.search(
+                r"<button(?:\s+?[^<]*)title=\"(?:Add|Сде)(?:.+?)<span\sclas"
+                r"s=\"d-button__label\">((?:\d+)?(?:\s+\d+)*)[^(?:Отк|Tur)]",
+                self.__parse,
+                re.M,
             )
+
+            if temp:
+                self.__add_to_the = int("".join(temp.groups()[0].split()))
 
         return self.__add_to_the
 
@@ -893,7 +895,6 @@ class Static:
                 self.__parse,
                 re.M,
             )
-
             if check_cover:
                 return self.__cover
 

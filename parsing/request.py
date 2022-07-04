@@ -11,6 +11,7 @@ class Request:
     def __init__(self, url: str) -> None:
         self.__url = url
         self.event_loop = asyncio.get_event_loop()
+        self.status = None
 
     def parse_url(self) -> str | None:
         """return html page"""
@@ -30,13 +31,16 @@ class Request:
             async with session.get(self.__url) as response:
                 print(response.status)
                 if response.status == 200:
+                    self.status = 200
                     return await response.text()
 
                 if response.status == 400:
+                    self.status = 400
                     raise TypeError(
                         "Track or album not found, check your link for correctness"
                     )
                 if response.status == 404:
+                    self.status = 404
                     raise TypeError("Incorrect URL")
 
     async def download_image(self) -> None:
