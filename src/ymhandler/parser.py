@@ -7,7 +7,7 @@ from braillert.colors import RICH_COLORS, RICH_RESETTER
 from braillert.generator import Generator
 from PIL import Image
 
-from parsing.request import Request
+from ymhandler.requester import RequestUrls
 
 # Consts
 
@@ -250,7 +250,7 @@ class Artist:
     """return Artist class"""
 
     def __init__(self, artist_id: str) -> None:
-        self.__parse = Request(YM_ARTIST + artist_id + "/info").parse_url()
+        self.__parse = RequestUrls(YM_ARTIST + artist_id + "/info").parse_url()
         self.url = YM_ARTIST + artist_id
         self.__name = None
         self.__avatar = None
@@ -416,7 +416,7 @@ class ArtistDetails:
     """a class for getting great details about an artist"""
 
     def __init__(self, artist_id: str) -> str:
-        self.__parse = Request(YM_ARTIST + artist_id).parse_url()
+        self.__parse = RequestUrls(YM_ARTIST + artist_id).parse_url()
         self.__popular_tracks = None
         self.__last_release = None
         self.__popular_albums = None
@@ -549,7 +549,7 @@ class ArtistCreativity:
         """checks whether compilations are available on the site or not"""
 
         if not self.__parse_albums:
-            self.__parse_albums = Request(
+            self.__parse_albums = RequestUrls(
                 YM_ARTIST + self.__artist_code + "/albums"
             ).parse_url()
 
@@ -605,7 +605,9 @@ class ArtistCreativity:
 
         if not self.__tracks:
 
-            __parse = Request(YM_ARTIST + self.__artist_code + "/tracks").parse_url()
+            __parse = RequestUrls(
+                YM_ARTIST + self.__artist_code + "/tracks"
+            ).parse_url()
 
             temp = re.search(
                 r"<span(?:\s+[^<]*)typo\stypo-h2_bold(?:.+)class=\"sidebar__place"
@@ -654,7 +656,7 @@ class ArtistCreativity:
 
         if not self.__similar:
 
-            temp = Request(YM_ARTIST + self.__artist_code + "/similar").parse_url()
+            temp = RequestUrls(YM_ARTIST + self.__artist_code + "/similar").parse_url()
 
             self.__similar = _fix_symbol(
                 re.findall(
@@ -672,7 +674,7 @@ class ArtistCreativity:
         """return a list of all videos"""
 
         if not self.__videos:
-            self.__videos = Request(
+            self.__videos = RequestUrls(
                 YM_ARTIST + self.__artist_code + "/videos"
             ).parse_url()
 
@@ -734,7 +736,7 @@ class Static:
             else:
                 self.type_url = "track"
                 self.__track_id = answer.get("track")
-            return Request(match.group()).parse_url()
+            return RequestUrls(match.group()).parse_url()
 
         raise TypeError("Incorrect URL")
 
@@ -915,7 +917,7 @@ class Static:
         """return the finished braille art"""
 
         if not self.__braille_art:
-            Request(url).parse_img()
+            RequestUrls(url).parse_img()
             image = Image.open("image.jpg")
             width = 138
             wpercent = width / float(image.size[0])

@@ -3,14 +3,10 @@ import argparse
 from rich.console import Console
 from rich.panel import Panel
 
-from parsing.parser import Static
+from ymhandler.parser import Static
 
 # Consts
 
-# EXAMPLE_LINKS = (
-#     "https://music.yandex.com/album/123123",
-#     "https://music.yandex.com/album/123123/track/123123",
-# )
 STATIC = "[ [bold red]Ym STATIC[/bold red] ] [bold yellow]\u21AF[/bold yellow]"
 INFO = "[ [bold red]Ym INFO[/bold red] ] [bold yellow]\u21AF[/bold yellow]"
 DETAILS = "[ [bold red]Ym DETAILS[/bold red] ] [bold yellow]\u21AF[/bold yellow]"
@@ -23,7 +19,6 @@ YELEND = "[/bold yellow]"
 GREEND = "[/bold green]"
 VERSION = "v1.14.1"
 console = Console(highlight=False)
-
 
 # Utilitarian functions
 
@@ -192,7 +187,7 @@ def output_console(url: str, det: bool, creat: bool, cover: bool) -> None:
         Panel.fit(
             f"{GRE}Ym Handler{GREEND} - "
             "by [bold red]uewquewqueqwue[/bold red]"
-            f"(only regex \U0001F638 \U0001F63C) {GRE}< qdissh@gmail.com >{GREEND}",
+            f"(only regex \U0001F638 \U0001F63C \U0001F63D) {GRE}< qdissh@gmail.com >{GREEND}",
             title="[bold yellow]Information[/bold yellow]",
             subtitle=f"[bold yellow]{VERSION}[/bold yellow]",
         )
