@@ -9,6 +9,13 @@
 
 </div>
 
+### How to use
+`pip install YmHandler`
+
+`YmHandler -u <ur url>`
+
+Without parentheses, and also there is no difference with a small letter ymhandler or YmHandler
+
 ### Demo
   
 ![Demo](https://github.com/uewquewqueqwue/Ym-Handler/blob/main/update_images/YmHandler.gif)
